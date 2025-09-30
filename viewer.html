@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connections History Viewer</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; padding: 16px; color: #111; background: #fff; }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
+    h1 { font-size: 20px; margin: 0; }
+    .list { display: grid; gap: 10px; }
+    .item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #fafafa; }
+    .muted { color: #6b7280; font-size: 12px; }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+    .cat { border-radius: 8px; background: #fff; border: 1px solid #e5e7eb; padding: 8px; }
+    .cat h4 { margin: 0 0 6px; font-size: 14px; }
+    .cat p { margin: 0; font-size: 13px; }
+    .words { font-weight: 600; }
+    .controls { display:flex; gap:8px; align-items:center; }
+    input { padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; }
+    button { padding:8px 12px; border-radius:8px; background:#2563eb; color:#fff; border:1px solid transparent; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>History Viewer</h1>
+    <div class="controls">
+      <input id="filter" placeholder="Filter by name or location">
+      <button id="refresh">Refresh</button>
+    </div>
+  </header>
+  <main>
+    <div id="list" class="list"></div>
+  </main>
+
+  <script>
+    const list = document.getElementById('list');
+    const filter = document.getElementById('filter');
+    const refreshBtn = document.getElementById('refresh');
+
+    async function load() {
+      const res = await fetch('http://localhost:3000/api/history');
+      const data = await res.json();
+      const term = (filter.value || '').toLowerCase();
+      const items = (data.items || []).filter(r => {
+        const s = `${r.name || ''} ${r.location || ''}`.toLowerCase();
+        return !term || s.includes(term);
+      });
+      render(items.reverse());
+    }
+
+    function render(items) {
+      list.innerHTML = '';
+      for (const r of items) {
+        const div = document.createElement('div');
+        div.className = 'item';
+        const header = document.createElement('div');
+        header.innerHTML = `<strong>${r.name || ''}</strong> — ${r.location || ''} <span class="muted">(${r.ts || ''})</span>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        for (const c of (r.categories || [])) {
+          const card = document.createElement('div');
+          card.className = 'cat';
+          card.innerHTML = `<h4>${c.label} ${c.color ? '(' + c.color + ')' : ''}</h4>
+            <div class="words">${(c.words || []).join(', ')}</div>
+            <p>${c.explanation || ''}</p>`;
+          grid.appendChild(card);
+        }
+
+        const exp = document.createElement('p');
+        exp.className = 'muted';
+        exp.textContent = r.explanation || '';
+
+        div.appendChild(header);
+        div.appendChild(grid);
+        div.appendChild(exp);
+        list.appendChild(div);
+      }
+    }
+
+    refreshBtn.addEventListener('click', load);
+    filter.addEventListener('input', load);
+    load();
+  </script>
+</body>
+</html>
+
