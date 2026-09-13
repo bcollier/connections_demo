@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connections</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <header class="app-header">
+    <h1>Connections</h1>
+    <div class="status">
+      <span id="mistakes">Mistakes: 0/3</span>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <form id="genForm" class="gen-form" onsubmit="return false;">
+      <input id="nameInput" type="text" placeholder="Your name" aria-label="Your name">
+      <input id="locationInput" type="text" placeholder="City, State/Region" aria-label="Your location">
+      <button id="generateBtn" class="primary" type="button">Generate a Puzzle About Me!</button>
+      <div id="loader" class="loader" hidden>
+        <div class="robot">
+          <div class="head"></div>
+          <div class="body"></div>
+          <div class="paper"></div>
+        </div>
+        <div id="loaderText" class="loader-text">Asking the AI…</div>
+      </div>
+    </form>
+
+    <section id="solved" class="solved"></section>
+
+    <section class="grid" id="grid" aria-label="Word grid" role="group"></section>
+
+    <section class="controls">
+      <button id="shuffleBtn" class="secondary" type="button" aria-label="Shuffle words">Shuffle</button>
+      <div class="spacer"></div>
+      <button id="clearBtn" class="secondary" type="button" aria-label="Clear selection">Deselect</button>
+      <button id="submitBtn" class="primary" type="button" disabled>Submit</button>
+      <button id="answersBtn" class="secondary" type="button">Show answers</button>
+    </section>
+
+    <section id="message" class="message" role="status" aria-live="polite"></section>
+    <section id="notes" class="notes"></section>
+    <section id="explanation" class="explanation"></section>
+    <section id="answers" class="answers" hidden></section>
+    <section id="recommendations" class="recommendations"></section>
+  </main>
+
+  <footer class="app-footer">
+    <button id="resetBtn" class="link" type="button">Reset Game</button>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
+
