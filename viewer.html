@@ -39,7 +39,8 @@
     const refreshBtn = document.getElementById('refresh');
 
     async function load() {
-      const res = await fetch('http://localhost:3000/api/history');
+      const base = window.CONNECTIONS_API_BASE || (location.protocol.startsWith('http') && location.port === '3000' ? location.origin : 'http://localhost:3000');
+      const res = await fetch(`${base}/api/history`);
       const data = await res.json();
       const term = (filter.value || '').toLowerCase();
       const items = (data.items || []).filter(r => {

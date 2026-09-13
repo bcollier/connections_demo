@@ -15,7 +15,9 @@ app.use((req, _res, next) => {
   next();
 });
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Without a key the server still serves the game and returns the fallback puzzle.
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+if (!openai) console.warn('OPENAI_API_KEY is not set; /api/generate will return the fallback puzzle.');
 const MODEL = process.env.MODEL || 'gpt-5';
 const EXAMPLE_ROWS = Number.parseInt(process.env.EXAMPLE_ROWS || '12', 10);
 const EXAMPLE_CSV_PATH = path.resolve(process.cwd(), 'nyt_connections_groups_history_sept2025.csv');
@@ -114,9 +116,12 @@ function extractJsonCandidate(text) {
   throw new Error('Unable to parse JSON from model output');
 }
 
-// Basic health route
-app.get('/', (_req, res) => {
-  res.type('text/plain').send('OK');
+// Serve the static game so http://localhost:3000 is the whole app.
+// Only these files are exposed; .env, logs/ and data/ are never served.
+const STATIC_FILES = ['index.html', 'script.js', 'samples.js', 'styles.css', 'viewer.html'];
+app.get(['/', ...STATIC_FILES.map(f => `/${f}`)], (req, res) => {
+  const file = req.path === '/' ? 'index.html' : req.path.slice(1);
+  res.sendFile(path.resolve(process.cwd(), file));
 });
 
 // History API (read-only)
@@ -202,6 +207,7 @@ function formatDuration(ms) {
 }
 
 async function generateOnce(prompt, attempt) {
+  if (!openai) throw new Error('OPENAI_API_KEY is not set');
   const req = { model: MODEL, tools: [{ type: 'web_search' }], input: prompt };
   // Prefer a playful output when supported
   if (!/^gpt-5(\b|\D)/.test(MODEL)) req.temperature = 0.7;
@@ -260,7 +266,7 @@ async function generateWithRetries(name, location, maxRetries = 2) {
 
 async function ensureExplanations(data) {
   const missing = data.categories.some(c => !c.explanation);
-  if (!missing) return data;
+  if (!missing || !openai) return data;
   const categoriesJson = JSON.stringify(data.categories.map(c => ({ label: c.label, words: c.words })), null, 2);
   const prompt = `Provide a SHORT explanation (<= 200 chars) for each Connections category below. Return ONLY JSON array of strings in the SAME ORDER as input categories.\n\nCategories:\n${categoriesJson}`;
   const req = { model: MODEL, input: prompt };

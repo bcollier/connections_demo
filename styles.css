@@ -47,9 +47,27 @@ body {
 
 .app-main { max-width: 720px; width: 100%; margin: 0 auto; padding: 12px 20px 24px; }
 
-.gen-form { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; margin-bottom: 12px; align-items: center; }
-.gen-form input { background: var(--surface); color: var(--fg); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; }
+.gen-form { display: grid; grid-template-columns: 1fr 1fr auto auto auto; gap: 10px; margin-bottom: 6px; align-items: center; }
+.gen-form input { background: var(--surface); color: var(--fg); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; min-width: 0; }
 .gen-form button { white-space: nowrap; }
+@media (max-width: 720px) {
+  .gen-form { grid-template-columns: 1fr 1fr; }
+  .gen-form #generateBtn { grid-column: 1 / -1; }
+  .gen-form .loader { grid-column: 1 / -1; justify-content: center; }
+}
+
+.hint { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 4px 0 10px; min-height: 0; }
+.hint:empty { display: none; }
+
+/* Bring-your-own-key panel for the static build */
+.key-panel { background: var(--surface); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.key-panel[hidden] { display: none; }
+.key-panel summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.key-panel .hint { margin: 8px 0; }
+.key-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.key-row input { flex: 1 1 220px; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid color-mix(in oklab, var(--muted) 35%, transparent); border-radius: 10px; padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.footer-link { color: var(--muted); font-size: 14px; margin-left: 12px; }
 
 .solved { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; }
 .solved .group {

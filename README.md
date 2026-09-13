@@ -1,55 +1,62 @@
 # Connections-style Game
 
-A simple, static web app inspired by the NYT Connections game. There are 16 words that form four related groups of four. Select four related words and press Submit. You have 3 mistakes allowed before the game ends.
+A small web app inspired by the NYT Connections game. There are 16 words that form four related groups of four. Select four related words and press Submit. You get 3 mistakes before the game ends.
+
+The twist: type your name and location and the app asks GPT-5 (with web search) to build a puzzle about *you*, with a color-coded difficulty rubric, per-category explanations, and a few links to read afterwards.
+
+**Live demo:** https://bcollier.github.io/connections_demo/
+
+## How puzzles are generated
+
+The frontend is plain HTML/CSS/JS with no build step. It picks a puzzle source in this order:
+
+1. **Local server** (`server/index.js`). If the page can reach it, generation goes through the server, which holds the OpenAI key in `.env` and logs each run to `logs/` and `data/`.
+2. **Your own key in the browser.** On the static GitHub Pages build there is no server, so the page offers a "Use your own OpenAI key" panel. The key lives only in that browser's `localStorage` and is sent only to `api.openai.com`. Nothing is ever committed or uploaded.
+3. **Bundled samples** (`samples.js`). "Try a sample" loads one of three hand-written puzzles so the demo is playable with no key at all.
+
+No API key is stored anywhere in this repository. `.env` is git-ignored and `.env.example` shows the expected variables.
 
 ## Run locally
 
-Open `index.html` in a browser:
+Static only (samples and bring-your-own-key modes):
 
-- macOS Finder: double-click `index.html`.
-- Terminal:
 ```bash
-open /Users/bcollier/Code/connections_demo/index.html
+open index.html            # macOS
+# or any static server, e.g.
+python3 -m http.server 8080
 ```
 
-No build step is required.
-
-## Optional: Enable AI-generated puzzles
-
-This project includes a tiny Node server that calls OpenAI with web search to generate puzzle categories and words tailored to a name and location.
-
-1) Install dependencies and set your API key:
+With the AI server:
 
 ```bash
-cd /Users/bcollier/Code/connections_demo
 npm install
-cp .env.example .env
-# edit .env and set OPENAI_API_KEY
+cp .env.example .env       # then set OPENAI_API_KEY in .env
+npm run start              # http://localhost:3000 serves the game and the API
 ```
 
-2) Start the server:
+Optional `.env` settings: `MODEL` (defaults to `gpt-5`) and `PORT` (defaults to `3000`).
 
-```bash
-npm run start
-# Server runs on http://localhost:3000
+`viewer.html` lists past generations from `data/history.jsonl` when the server is running.
+
+## Deploying to GitHub Pages
+
+The site is served straight from the `main` branch root (Settings → Pages → Deploy from a branch → `main` / `/`). Every push to `main` redeploys. `.nojekyll` keeps GitHub from running Jekyll over the files.
+
+If you later host the server somewhere (Render, Fly, a Cloudflare Worker, etc.), point the static page at it by adding this before `script.js` in `index.html`:
+
+```html
+<script>window.CONNECTIONS_API_BASE = 'https://your-server.example';</script>
 ```
 
-3) In the web page, enter your name and location and click "Generate puzzle with AI". The app will fetch `/api/generate` and load a new puzzle. If generation fails, a safe fallback puzzle is used.
-
-Model configuration
-- Defaults to GPT-5 with web search. To override:
-
-```bash
-echo "MODEL=gpt-5" >> .env  # or set another supported model
-```
+The server already sends permissive CORS headers. Add rate limiting before exposing it publicly, since each request costs an OpenAI call.
 
 ## Customize the puzzle
 
-Edit `script.js` and change `DEFAULT_PUZZLE.categories` to your own labels and words.
+Edit `script.js` and change `DEFAULT_PUZZLE.categories`, or add entries to `samples.js`.
 
 - Keep four categories.
 - Each with exactly four distinct words.
-- Words are shown in uppercase for consistency, but any strings work.
+- Words are shown in uppercase, but any strings work.
 
 ## Gameplay
 
@@ -58,18 +65,4 @@ Edit `script.js` and change `DEFAULT_PUZZLE.categories` to your own labels and w
 - Correct sets are locked and displayed above the grid.
 - You get 3 total mistakes. After that, the game reveals remaining groups and ends.
 - Shuffle reorders remaining tiles. Deselect clears your current selection. Reset starts a new game.
-
-## Colors and celebrations
-
-Each category includes a color that reflects its difficulty (inspired by NYT):
-
-- Yellow: simplest
-- Green: simple
-- Blue: medium
-- Purple: hardest
-
-When a group is solved, its solved chip is tinted with the assigned color. The app also triggers celebratory animations with increasing intensity for the 1st, 2nd, and 3rd solved groups, and a large fireworks-style celebration when all four groups are solved. Animations are client-side only and require no external libraries.
-
-## Notes
-
-This app is intentionally minimal and client-only, no tracking, and works offline once loaded.
+- Solve all four groups to see the AI's overall explanation and reading links.

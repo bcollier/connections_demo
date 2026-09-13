@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connections</title>
+  <meta name="description" content="A Connections-style word game that can generate a personalized puzzle about you with AI.">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +24,7 @@
       <input id="nameInput" type="text" placeholder="Your name" aria-label="Your name">
       <input id="locationInput" type="text" placeholder="City, State/Region" aria-label="Your location">
       <button id="generateBtn" class="primary" type="button">Generate a Puzzle About Me!</button>
+      <button id="sampleBtn" class="secondary" type="button">Try a sample</button>
       <div id="loader" class="loader" hidden>
         <div class="robot">
           <div class="head"></div>
@@ -32,6 +34,22 @@
         <div id="loaderText" class="loader-text">Asking the AI…</div>
       </div>
     </form>
+    <p id="source" class="hint" aria-live="polite"></p>
+
+    <details id="keyPanel" class="key-panel" hidden>
+      <summary>Use your own OpenAI key for live generation</summary>
+      <p class="hint">
+        This is a static page, so there is no server holding a key. Paste an OpenAI API key and it is
+        stored only in this browser's local storage and sent only to api.openai.com. Each puzzle is one
+        GPT-5 call with web search. Remove it any time with Forget.
+      </p>
+      <div class="key-row">
+        <input id="keyInput" type="password" placeholder="sk-…" aria-label="OpenAI API key" autocomplete="off" spellcheck="false">
+        <button id="saveKeyBtn" class="secondary" type="button">Save key</button>
+        <button id="clearKeyBtn" class="link" type="button" hidden>Forget</button>
+      </div>
+      <div id="keyStatus" class="hint"></div>
+    </details>
 
     <section id="solved" class="solved"></section>
 
@@ -54,9 +72,10 @@
 
   <footer class="app-footer">
     <button id="resetBtn" class="link" type="button">Reset Game</button>
+    <a class="footer-link" href="https://github.com/bcollier/connections_demo" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
   </footer>
 
+  <script src="samples.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>
-
