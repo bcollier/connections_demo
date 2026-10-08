@@ -74,3 +74,7 @@ test('the committed history holds only puzzles about Ben (the local server appen
 test('the About Ben pack is only about Ben', () => {
   for (const p of packs.find(x => x.id === 'ben').puzzles) assert.equal(p.generated.player, 'Ben Collier');
 });
+
+test('no em dashes in any pack (ben.collier.phd shows these, and its copy uses none)', () => {
+  for (const p of packs) assert.ok(!JSON.stringify(p).includes('—'), p.id);
+});
