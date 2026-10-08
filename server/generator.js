@@ -6,6 +6,7 @@ import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { OutputSchema, normalizeWordForDisplay, canonicalizeWord, normalizeColor } from './validate.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Which model writes the puzzle. With JETSTREAM_API_KEY set, an open model on
@@ -88,20 +89,6 @@ export const RequestSchema = z.object({
   location: z.string().min(1).max(160),
 });
 
-const OutputSchema = z.object({
-  categories: z.array(z.object({
-    label: z.string().min(1).max(40),
-    words: z.array(z.string().min(1).max(20)).length(4),
-    explanation: z.string().min(1).max(240).optional(),
-    color: z.string().optional(),
-  })).length(4),
-  explanation: z.string().min(1),
-  recommendations: z.array(z.object({
-    title: z.string(),
-    url: z.string().url(),
-    type: z.enum(['article', 'video', 'podcast']).optional(),
-  })).max(6).optional(),
-});
 
 function buildPrompt({ name, location }) {
   const examplesText = getExampleGroupsText(EXAMPLE_ROWS);
@@ -175,28 +162,6 @@ function extractJsonCandidate(text) {
     try { return JSON.parse(slice); } catch {}
   }
   throw new Error('Unable to parse JSON from model output');
-}
-
-// Word normalization for display and uniqueness
-function normalizeWordForDisplay(word) {
-  return String(word)
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .replace(/[^A-Z0-9 \-']/g, '')
-    .trim();
-}
-function canonicalizeWord(word) {
-  return String(word).toUpperCase().replace(/[^A-Z0-9]/g, '');
-}
-
-function normalizeColor(input) {
-  if (!input) return undefined;
-  const v = String(input).trim().toLowerCase();
-  if (v.startsWith('y')) return 'Yellow';
-  if (v.startsWith('g')) return 'Green';
-  if (v.startsWith('b')) return 'Blue';
-  if (v.startsWith('p')) return 'Purple';
-  return undefined;
 }
 
 function formatDuration(ms) {

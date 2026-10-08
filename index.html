@@ -4,64 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connections About You</title>
-  <meta name="description" content="A Connections-style word game whose four groups an AI writes about you, from your name, your town, and a web search.">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="A Connections-style word game. Play puzzles an AI wrote about Ben Collier, or hand-made Star Wars, Lord of the Rings and Carnegie Mellon packs, each in its own animated theme.">
+  <meta name="theme-color" content="#22302b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <meta name="color-scheme" content="light dark">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="player/player.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="app-header">
-    <h1>Connections</h1>
-    <div class="status">
-      <span id="mistakes">Mistakes: 0/3</span>
-    </div>
+    <h1>Connections <span>about you, and a few galaxies far away</span></h1>
+    <p>Find four groups of four. Pick a theme: puzzles an AI wrote about me, or hand-made packs for Star Wars, The Lord of the Rings and Carnegie Mellon.</p>
   </header>
 
   <main class="app-main">
-    <form id="genForm" class="gen-form" onsubmit="return false;">
-      <input id="nameInput" type="text" placeholder="Your name" aria-label="Your name">
-      <input id="locationInput" type="text" placeholder="City, State/Region" aria-label="Your location">
-      <button id="generateBtn" class="primary" type="button">Generate a Puzzle About Me!</button>
-      <div id="loader" class="loader" hidden>
-        <div class="robot">
-          <div class="head"></div>
-          <div class="body"></div>
-          <div class="paper"></div>
-        </div>
-        <div id="loaderText" class="loader-text">Asking the AI…</div>
-      </div>
-    </form>
-    <p id="demoNote" class="demo-note" hidden>Demo: this page has no server, and an OpenAI key cannot live in a public web page. So the button plays the five puzzles GPT-5 wrote with web search for Ben Collier in Pittsburgh, one per click. <a href="https://github.com/bcollier/connections_demo#run-it-with-live-ai-generation">Run the server</a> to make one about you.</p>
-
-    <section id="solved" class="solved"></section>
-
-    <section class="grid" id="grid" aria-label="Word grid" role="group"></section>
-
-    <section class="controls">
-      <button id="shuffleBtn" class="secondary" type="button" aria-label="Shuffle words">Shuffle</button>
-      <div class="spacer"></div>
-      <button id="clearBtn" class="secondary" type="button" aria-label="Clear selection">Deselect</button>
-      <button id="submitBtn" class="primary" type="button" disabled>Submit</button>
-      <button id="answersBtn" class="secondary" type="button">Show answers</button>
+    <section id="genPanel" class="gen-panel" aria-label="Make a puzzle about you" hidden>
+      <form id="genForm" class="gen-form">
+        <label><span>Your name</span><input id="nameInput" type="text" autocomplete="name" maxlength="80" required></label>
+        <label><span>Your town</span><input id="locationInput" type="text" placeholder="City, State" maxlength="160" required></label>
+        <button id="generateBtn" class="gen-btn" type="submit">Write a puzzle about me</button>
+      </form>
+      <p id="genStatus" class="gen-status" role="status" aria-live="polite"></p>
+      <p id="demoNote" class="gen-note" hidden>These five puzzles were written by GPT-5 about me, after it searched the web for my name and Pittsburgh. This copy has no server, because an AI key cannot live in a public web page. To get one about you, try the <a href="https://connections-about-you.vercel.app">live version</a> or <a href="https://github.com/bcollier/connections_demo#running-it-locally">run the server</a>.</p>
     </section>
 
-    <section id="message" class="message" role="status" aria-live="polite"></section>
-    <section id="notes" class="notes"></section>
-    <section id="explanation" class="explanation"></section>
-    <section id="answers" class="answers" hidden></section>
-    <section id="recommendations" class="recommendations"></section>
+    <div id="game"></div>
   </main>
 
   <footer class="app-footer">
-    <button id="resetBtn" class="link" type="button">Reset Game</button>
-    <a class="link" href="https://github.com/bcollier/connections_demo">Source on GitHub</a>
+    <a href="https://github.com/bcollier/connections_demo">Source on GitHub</a>
+    <a href="viewer.html">All saved AI puzzles</a>
+    <a href="https://ben.collier.phd/connections/">On ben.collier.phd</a>
+    <span>Inspired by the New York Times game Connections. Not affiliated with the Times.</span>
   </footer>
 
   <script src="config.js"></script>
-  <script src="demo/puzzles.js"></script>
+  <script src="packs/packs.js"></script>
+  <script src="player/player.js"></script>
   <script src="script.js" defer></script>
 </body>
 </html>
-
