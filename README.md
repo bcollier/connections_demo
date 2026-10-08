@@ -1,6 +1,7 @@
 # Connections About You
 
-**Play the demo:** https://bcollier.github.io/connections_demo/
+**Play it live:** https://connections-about-you.vercel.app (the AI writes a new puzzle about you)  
+**Saved-puzzle demo:** https://bcollier.github.io/connections_demo/ (no server, plays five puzzles the AI wrote earlier)
 
 A Connections-style word game in the style of the NYT puzzle, where an AI writes the four groups about the player. Type a name and a town, and a small Node server asks GPT-5, with web search, for four groups of four words drawn from that person's public footprint, their city, and some playful guesses about their tastes. Find the four groups with no more than three mistakes. When the game ends, the page shows why each group was chosen and links to what the AI read.
 
@@ -11,6 +12,20 @@ A Connections-style word game in the style of the NYT puzzle, where an AI writes
 GitHub Pages only serves static files, and an OpenAI key cannot live in a public web page: anything the browser can read, a visitor can read. So the demo has no live generation. Its button plays the five puzzles GPT-5 wrote for "Ben Collier, Pittsburgh, PA" on September 29, 2025, one per click, saved from the server's history in [`demo/puzzles.js`](demo/puzzles.js). Everything else is the real game: selection, mistakes, the colored groups, the per-group notes, the closing explanation, and the links.
 
 [`viewer.html`](https://bcollier.github.io/connections_demo/viewer.html) lists the same saved puzzles side by side.
+
+## The live version on Vercel
+
+https://connections-about-you.vercel.app serves the same page, and `api/generate.js` runs the generator as a Vercel function. The OpenAI key is stored only in the Vercel project's environment variables (`OPENAI_API_KEY`), never in the page or the repo.
+
+Because anyone can press the button, the cost has limits, outermost first:
+
+1. **A hard spend limit at OpenAI.** The key belongs to its own OpenAI project, with a monthly budget and "Enforce a hard limit" turned on. Past the budget OpenAI refuses the call, and the page says so and plays a saved puzzle.
+2. **Only this page may call it.** Requests from other sites, or with no `Origin`, get a 403.
+3. **Per-visitor limits.** Three puzzles per 15 minutes and eight a day per IP address, and at most two puzzles in progress per server instance. These counters live in memory and reset when Vercel starts a fresh instance, so they slow abuse rather than stop it; the OpenAI limit is the real cap.
+
+On Vercel nothing is written to disk. Names and towns typed by visitors are not stored, `GET /api/history` does not exist, and the "avoid repeating themes" memory starts from `data/history.jsonl` and is kept in memory only. If the key is missing, the budget is spent, or a call fails, the page plays a saved puzzle with a one-line note.
+
+Deploy with `npx vercel deploy --prod` from this folder (project `connections-about-you`, team `cmu-demos`). `vercel.json` gives the function up to 300 seconds, since a puzzle takes one to three minutes.
 
 ## Run it with live AI generation
 
@@ -34,7 +49,7 @@ If the server is not running, the page says so and plays a saved puzzle instead.
 
 ## How a puzzle is made
 
-`server/index.js` builds one prompt and calls the OpenAI Responses API with the `web_search` tool.
+`server/generator.js` builds one prompt and calls the OpenAI Responses API with the `web_search` tool.
 
 - **Rules for the groups.** At least two groups are about fun things (food, games, music, nostalgia), at most one is about work, and at most one is about the place. Sixteen unique words, family friendly, public information only.
 - **Examples of good groups.** The prompt includes real NYT Connections groups from [`nyt_connections_groups_history_sept2025.csv`](nyt_connections_groups_history_sept2025.csv) to show the format and the difficulty ladder (yellow easiest, then green, blue, and purple for wordplay).
@@ -52,7 +67,9 @@ Every request and model reply is appended to `logs/app.log`, and every finished 
 | `config.js` | Where the generator runs. Empty means demo mode. |
 | `demo/puzzles.js` | The saved GPT-5 puzzles the demo plays. |
 | `viewer.html` | Lists generated puzzles, from the server's history or the saved ones. |
-| `server/index.js` | Express server: `POST /api/generate`, `GET /api/history`, `GET /api/ping`, `POST /api/client-log`. |
+| `server/generator.js` | The prompt, the OpenAI call and the checks, shared by both servers. |
+| `server/index.js` | Local Express server: `POST /api/generate`, `GET /api/history`, `GET /api/ping`, `POST /api/client-log`. Writes `logs/app.log` and `data/history.jsonl`. |
+| `api/generate.js`, `api/ping.js`, `api/client-log.js`, `vercel.json` | The Vercel deployment: the same generator behind the cost limits above. |
 | `data/history.jsonl` | Every puzzle the server has generated. |
 | `nyt_connections_groups_*.csv` | Example groups used in the prompt. |
 

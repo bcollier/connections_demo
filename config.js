@@ -1,5 +1,7 @@
-// Where the puzzle generator (server/index.js) runs.
-// Leave empty for the GitHub Pages demo: a static page cannot hold an OpenAI
-// key, so the Generate button plays puzzles the AI made earlier (demo/puzzles.js).
-// Opening the page from localhost or a file uses http://localhost:3000 automatically.
+// Where the puzzle generator runs. Usually leave this empty:
+// - on Vercel the page calls its own /api/generate (api/generate.js);
+// - on localhost or a file it calls http://localhost:3000 (server/index.js);
+// - on GitHub Pages there is no server, so the button plays saved AI puzzles
+//   (demo/puzzles.js).
+// Set a URL here only to point a copy at a server somewhere else.
 window.CONNECTIONS_API_BASE = '';

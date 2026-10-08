@@ -16,16 +16,18 @@ const DEFAULT_PUZZLE = {
   ],
 };
 
-// Live generation needs server/index.js, which holds the OpenAI key. Without it
-// (the GitHub Pages demo) the Generate button plays saved AI puzzles instead.
+// Live generation needs a server holding the OpenAI key: the Vercel deployment
+// (same origin, api/generate.js) or server/index.js on localhost:3000. The GitHub
+// Pages copy has no server, so its Generate button plays saved AI puzzles.
 const API_BASE = resolveApiBase();
-const DEMO_MODE = !API_BASE;
+const DEMO_MODE = API_BASE === null;
 
 function resolveApiBase() {
   const configured = (window.CONNECTIONS_API_BASE || '').trim();
   if (configured) return configured.replace(/\/$/, '');
-  const isLocal = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname);
-  return isLocal ? 'http://localhost:3000' : '';
+  if (location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname)) return 'http://localhost:3000';
+  if (location.hostname.endsWith('github.io')) return null;
+  return ''; // same origin: the Vercel deployment
 }
 
 /** @typedef {{ label: string, words: string[] }} Category */
@@ -358,13 +360,13 @@ async function onGenerate() {
         console.error(e);
         clientLog('error', 'client_generate_exception', { err: String(e) });
         data = await nextDemoPuzzle();
-        fellBack = true;
+        fellBack = e.userMessage || true;
       }
     }
 
     loadPuzzle(data);
     if (DEMO_MODE) flashMessage(`Saved AI puzzle ${demoIndex} of ${demoPuzzles.length} loaded.`, 'success');
-    else if (fellBack) flashMessage('Could not reach the AI server, so this is a saved AI puzzle.', 'warn');
+    else if (fellBack) flashMessage(typeof fellBack === 'string' ? fellBack : 'Could not reach the AI server, so this is a saved AI puzzle.', 'warn');
     else flashMessage('AI puzzle loaded!', 'success');
     // no celebration here; celebrate when a group is actually solved
   } catch (e) {
@@ -386,7 +388,9 @@ async function fetchGeneratedPuzzle(name, location) {
   });
   if (!res.ok) {
     clientLog('error', 'client_generate_http_error', { status: res.status });
-    throw new Error(`HTTP ${res.status}`);
+    const err = new Error(`HTTP ${res.status}`);
+    try { err.userMessage = (await res.json()).message; } catch {}
+    throw err;
   }
   return res.json();
 }
