@@ -6,7 +6,7 @@ A word game in the style of the New York Times' Connections, with two kinds of p
 
 - https://bcollier.github.io/connections_demo/ : every pack, no server (the About Ben pack is five puzzles the AI wrote about me).
 - https://ben.collier.phd/connections/ : the same game inside my site.
-- https://connections-about-you.vercel.app : the live version, where the AI writes a new puzzle about whoever types their name.
+- https://connections-about-you.vercel.app : the live version, where the AI writes a new puzzle about whoever types their name. It only does that while a model key is set in the Vercel project; without one it says so and plays a saved puzzle.
 
 Deep links pick a theme and puzzle: `?theme=starwars&puzzle=2` (themes are `ben`, `starwars`, `lotr`, `cmu`).
 
