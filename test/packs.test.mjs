@@ -65,3 +65,12 @@ test('the validator catches a missing color or explanation in strict mode', () =
 test('packs/packs.js matches packs/*.json (run node scripts/build-packs.mjs)', () => {
   assert.equal(fs.readFileSync(new URL('../packs/packs.js', import.meta.url), 'utf8'), bundle(packs));
 });
+
+test('the committed history holds only puzzles about Ben (the local server appends every player)', () => {
+  const rows = fs.readFileSync(new URL('../data/history.jsonl', import.meta.url), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
+  for (const r of rows) assert.equal(r.name, 'Ben Collier', 'remove other players from data/history.jsonl before committing');
+});
+
+test('the About Ben pack is only about Ben', () => {
+  for (const p of packs.find(x => x.id === 'ben').puzzles) assert.equal(p.generated.player, 'Ben Collier');
+});
