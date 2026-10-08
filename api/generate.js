@@ -1,10 +1,13 @@
 // Vercel function: POST /api/generate { name, location } -> a puzzle.
-// The OpenAI key lives only in the Vercel project's environment variables.
+// Model keys live only in the Vercel project's environment variables:
+// JETSTREAM_API_KEY (+ TAVILY_API_KEY for the web search) for the free open
+// model, or OPENAI_API_KEY for GPT-5. See server/generator.js.
 //
-// Cost guards, outermost first:
-//  1. The key belongs to its own OpenAI project with a hard monthly spend limit,
-//     so OpenAI itself refuses calls once the budget is used (we answer 503
-//     and the page plays a saved puzzle).
+// Guards, outermost first:
+//  1. Jetstream is free (an academic allocation) and Tavily's free plan stops at
+//     its monthly credits instead of billing. If OpenAI is used instead, its key
+//     belongs to a project with a hard monthly spend limit. Either way a refused
+//     call answers 503 and the page plays a saved puzzle.
 //  2. Requests must come from this site's own pages (Origin check).
 //  3. Each visitor (by IP) gets PER_IP_WINDOW puzzles per 15 minutes and
 //     PER_IP_DAY per day, and each server instance runs at most MAX_IN_FLIGHT
@@ -13,7 +16,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { makePuzzle, RequestSchema } from '../server/generator.js';
+import { makePuzzle, RequestSchema, PROVIDER } from '../server/generator.js';
 
 const PER_IP_WINDOW = 3;
 const PER_IP_DAY = 8;
@@ -78,7 +81,7 @@ export default async function handler(req, res) {
   if (inFlight >= MAX_IN_FLIGHT) {
     return res.status(429).json({ error: 'busy', message: 'The AI is busy writing other puzzles. Here is a saved one for now.' });
   }
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.JETSTREAM_API_KEY && !process.env.OPENAI_API_KEY) {
     return res.status(503).json({ error: 'nokey', message: 'Live puzzles are switched off right now. Here is a saved one.' });
   }
 
@@ -92,8 +95,11 @@ export default async function handler(req, res) {
   } catch (err) {
     const code = err && (err.code || (err.error && err.error.code));
     console.error('generate failed:', err && err.status, code || String(err).slice(0, 200));
-    if (err && err.status === 429 && /spend_limit|quota/.test(String(code))) {
-      return res.status(503).json({ error: 'budget', message: 'The AI has used up this month\'s budget. Here is a saved puzzle.' });
+    if (err && err.status === 429) {
+      const budget = PROVIDER === 'openai' && /spend_limit|quota/.test(String(code));
+      return res.status(503).json({ error: budget ? 'budget' : 'upstream-busy', message: budget
+        ? 'The AI has used up this month\'s budget. Here is a saved puzzle.'
+        : 'The AI service is busy right now. Here is a saved puzzle; try again in a minute.' });
     }
     return res.status(502).json({ error: 'failed', message: 'The AI could not finish a puzzle this time. Here is a saved one.' });
   } finally {
