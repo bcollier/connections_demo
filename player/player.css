@@ -295,6 +295,7 @@
 .cx-compass, .cx-mountains, .cx-trees { position: absolute; fill: none; stroke: #4a3520; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
 .cx-compass .fill { fill: #8a2b1a; stroke: none; }
 .cx-compass { right: 16px; top: 14px; }
+.cx[data-theme="lotr"] .cx-kicker { padding-right: 64px; }
 .cx-mountains { left: 18px; bottom: 14px; }
 .cx-trees { right: 22px; bottom: 14px; }
 .cx-ring { position: absolute; left: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; filter: drop-shadow(0 0 10px rgba(255, 210, 90, .9)); animation: cx-ring 1.5s cubic-bezier(.2,.8,.2,1) forwards; }
@@ -355,7 +356,8 @@
 @media (max-width: 520px) {
   .cx[data-theme="lotr"] .cx-inner { padding: 30px 18px 22px; }
   .cx[data-theme="cmu"] .cx-inner { margin: 14px 8px; }
-  .cx-compass { width: 40px; height: 40px; right: 10px; top: 10px; }
+  .cx-compass { width: 34px; height: 34px; right: 10px; top: 10px; }
+  .cx[data-theme="lotr"] .cx-kicker { padding-right: 34px; letter-spacing: .05em; font-size: 11px; }
   .cx-mountains, .cx-trees { display: none; }
   .cx-runes { width: 44px; }
   .cx-runes-r { display: none; }
