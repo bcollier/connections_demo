@@ -12,6 +12,7 @@
     .item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #fafafa; }
     .muted { color: #6b7280; font-size: 12px; }
     .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } header { flex-wrap: wrap; gap: 8px; } }
     .cat { border-radius: 8px; background: #fff; border: 1px solid #e5e7eb; padding: 8px; }
     .cat h4 { margin: 0 0 6px; font-size: 14px; }
     .cat p { margin: 0; font-size: 13px; }
@@ -33,14 +34,25 @@
     <div id="list" class="list"></div>
   </main>
 
+  <script src="config.js"></script>
+  <script src="demo/puzzles.js"></script>
   <script>
+    // Same rule as the game: the local server's history when it is running,
+    // otherwise the saved puzzles that ship with the GitHub Pages demo.
+    const isLocal = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+    const API_BASE = (window.CONNECTIONS_API_BASE || '').replace(/\/$/, '') || (isLocal ? 'http://localhost:3000' : '');
     const list = document.getElementById('list');
     const filter = document.getElementById('filter');
     const refreshBtn = document.getElementById('refresh');
 
     async function load() {
-      const res = await fetch('http://localhost:3000/api/history');
-      const data = await res.json();
+      let data = { items: (window.CONNECTIONS_DEMO_PUZZLES || []).slice().reverse() };
+      if (API_BASE) {
+        try {
+          const res = await fetch(`${API_BASE}/api/history`);
+          if (res.ok) data = await res.json();
+        } catch {}
+      }
       const term = (filter.value || '').toLowerCase();
       const items = (data.items || []).filter(r => {
         const s = `${r.name || ''} ${r.location || ''}`.toLowerCase();
@@ -49,22 +61,26 @@
       render(items.reverse());
     }
 
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
     function render(items) {
       list.innerHTML = '';
       for (const r of items) {
         const div = document.createElement('div');
         div.className = 'item';
         const header = document.createElement('div');
-        header.innerHTML = `<strong>${r.name || ''}</strong> — ${r.location || ''} <span class="muted">(${r.ts || ''})</span>`;
+        header.innerHTML = `<strong>${esc(r.name)}</strong>, ${esc(r.location)} <span class="muted">(${esc(r.ts)}${r.model ? ', ' + esc(r.model) : ''})</span>`;
 
         const grid = document.createElement('div');
         grid.className = 'grid';
         for (const c of (r.categories || [])) {
           const card = document.createElement('div');
           card.className = 'cat';
-          card.innerHTML = `<h4>${c.label} ${c.color ? '(' + c.color + ')' : ''}</h4>
-            <div class="words">${(c.words || []).join(', ')}</div>
-            <p>${c.explanation || ''}</p>`;
+          card.innerHTML = `<h4>${esc(c.label)} ${c.color ? '(' + esc(c.color) + ')' : ''}</h4>
+            <div class="words">${esc((c.words || []).join(', '))}</div>
+            <p>${esc(c.explanation)}</p>`;
           grid.appendChild(card);
         }
 

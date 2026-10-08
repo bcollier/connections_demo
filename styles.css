@@ -34,6 +34,7 @@ body {
   color: var(--fg);
   display: grid;
   grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .app-header, .app-footer {
@@ -47,9 +48,13 @@ body {
 
 .app-main { max-width: 720px; width: 100%; margin: 0 auto; padding: 12px 20px 24px; }
 
-.gen-form { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; margin-bottom: 12px; align-items: center; }
-.gen-form input { background: var(--surface); color: var(--fg); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; }
+.gen-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; gap: 10px; margin-bottom: 12px; align-items: center; }
+.gen-form input { min-width: 0; background: var(--surface); color: var(--fg); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; }
 .gen-form button { white-space: nowrap; }
+.gen-form input[readonly] { color: var(--muted); }
+.demo-note { margin: -4px 0 14px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.demo-note a, .app-footer a.link { color: var(--primary); }
+.app-footer a.link { font-size: 14px; }
 
 .solved { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; }
 .solved .group {
@@ -63,7 +68,7 @@ body {
   border: 2px solid transparent;
 }
 
-.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .tile {
   user-select: none;
   background: var(--surface);
@@ -77,13 +82,16 @@ body {
   justify-content: center;
   border: 2px solid transparent;
   transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease;
+  container-type: inline-size;
 }
+/* Uppercase bold letters average about 0.68em wide, so this keeps the longest word on one line */
+.tile span { font-size: min(1em, calc(100cqw / (var(--len, 8) * 0.68))); overflow-wrap: break-word; }
 .tile:hover { transform: translateY(-1px); }
 .tile.selected { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 30%, transparent); }
 .tile.locked { background: color-mix(in oklab, var(--correct) 18%, var(--surface)); border-color: var(--correct); }
 .tile.wrong { background: color-mix(in oklab, var(--wrong) 18%, var(--surface)); }
 
-.controls { display: flex; align-items: center; gap: 10px; margin: 16px 0 10px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0 10px; }
 .controls .spacer { flex: 1; }
 
 button { font: inherit; border-radius: 10px; padding: 10px 14px; border: 1px solid transparent; cursor: pointer; }
@@ -118,7 +126,14 @@ button.primary:disabled { background: var(--surface); color: var(--muted); }
 @keyframes burst { to { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))); opacity: 0; } }
 
 @media (max-width: 520px) {
-  .tile { padding: 14px 8px; min-height: 56px; font-size: 14px; }
+  .tile { padding: 14px 5px; min-height: 56px; font-size: 13px; }
+  .grid { gap: 6px; }
+  .app-main { padding: 8px 16px 20px; }
+  .app-header, .app-footer { padding: 14px 16px; }
+  .gen-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .controls button { padding: 10px 12px; }
+  .gen-form button { grid-column: 1 / -1; }
+  .solved .group { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 
 /* Loader badge (bottom-right mini) */

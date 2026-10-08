@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Connections</title>
+  <title>Connections About You</title>
+  <meta name="description" content="A Connections-style word game whose four groups an AI writes about you, from your name, your town, and a web search.">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +33,7 @@
         <div id="loaderText" class="loader-text">Asking the AI…</div>
       </div>
     </form>
+    <p id="demoNote" class="demo-note" hidden>Demo: this page has no server, and an OpenAI key cannot live in a public web page. So the button plays the five puzzles GPT-5 wrote with web search for Ben Collier in Pittsburgh, one per click. <a href="https://github.com/bcollier/connections_demo#run-it-with-live-ai-generation">Run the server</a> to make one about you.</p>
 
     <section id="solved" class="solved"></section>
 
@@ -54,8 +56,11 @@
 
   <footer class="app-footer">
     <button id="resetBtn" class="link" type="button">Reset Game</button>
+    <a class="link" href="https://github.com/bcollier/connections_demo">Source on GitHub</a>
   </footer>
 
+  <script src="config.js"></script>
+  <script src="demo/puzzles.js"></script>
   <script src="script.js" defer></script>
 </body>
 </html>
