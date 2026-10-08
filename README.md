@@ -15,13 +15,15 @@ GitHub Pages only serves static files, and an OpenAI key cannot live in a public
 
 ## The live version on Vercel
 
-https://connections-about-you.vercel.app serves the same page, and `api/generate.js` runs the generator as a Vercel function. The OpenAI key is stored only in the Vercel project's environment variables (`OPENAI_API_KEY`), never in the page or the repo.
+https://connections-about-you.vercel.app serves the same page, and `api/generate.js` runs the generator as a Vercel function. Keys are stored only in the Vercel project's environment variables, never in the page or the repo.
+
+**Which model.** With `JETSTREAM_API_KEY` set, the puzzle is written by **gpt-oss-120b**, OpenAI's open-weight model, on [Jetstream2](https://jetstream-cloud.org/)'s inference service (an academic allocation, so free; OpenAI-compatible API at `https://llm.jetstream-cloud.org/api`). Jetstream models cannot search the web, so the server searches first: three [Tavily](https://tavily.com/) queries (the player, their interests, their town) with `TAVILY_API_KEY`, and the results go into the prompt as a numbered source list the model must take its facts and links from. A puzzle takes about 30 seconds. Without a Jetstream key it falls back to OpenAI GPT-5 and its own web search tool (`OPENAI_API_KEY`). `JETSTREAM_MODEL` switches the open model (`gemma-4-31b-it`, `qwen-3.8-27b`, `muse-glimmer` are also offered).
 
 Because anyone can press the button, the cost has limits, outermost first:
 
-1. **A hard spend limit at OpenAI.** The key belongs to its own OpenAI project, with a monthly budget and "Enforce a hard limit" turned on. Past the budget OpenAI refuses the call, and the page says so and plays a saved puzzle.
+1. **Nothing to bill.** Jetstream costs nothing, and Tavily's free plan stops at its monthly credits instead of charging (the puzzle is then made without search results). If OpenAI is used instead, its key belongs to its own OpenAI project with a monthly budget and "Enforce a hard limit" on, so past the budget OpenAI refuses the call and the page plays a saved puzzle.
 2. **Only this page may call it.** Requests from other sites, or with no `Origin`, get a 403.
-3. **Per-visitor limits.** Three puzzles per 15 minutes and eight a day per IP address, and at most two puzzles in progress per server instance. These counters live in memory and reset when Vercel starts a fresh instance, so they slow abuse rather than stop it; the OpenAI limit is the real cap.
+3. **Per-visitor limits.** Three puzzles per 15 minutes and eight a day per IP address, and at most two puzzles in progress per server instance, which also keeps the shared Jetstream allocation and Tavily credits from being drained. These counters live in memory and reset when Vercel starts a fresh instance, so they slow abuse rather than stop it.
 
 On Vercel nothing is written to disk. Names and towns typed by visitors are not stored, `GET /api/history` does not exist, and the "avoid repeating themes" memory starts from `data/history.jsonl` and is kept in memory only. If the key is missing, the budget is spent, or a call fails, the page plays a saved puzzle with a one-line note.
 

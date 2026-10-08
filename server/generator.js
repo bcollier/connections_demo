@@ -8,7 +8,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const MODEL = process.env.MODEL || 'gpt-5';
+// Which model writes the puzzle. With JETSTREAM_API_KEY set, an open model on
+// Jetstream2 (free on an academic allocation, OpenAI-compatible API); the server
+// searches the web first with Tavily and hands the model what it found, since
+// Jetstream models cannot search. Otherwise OpenAI with its own web search tool.
+export const PROVIDER = process.env.JETSTREAM_API_KEY ? 'jetstream' : 'openai';
+const JETSTREAM_BASE = (process.env.JETSTREAM_BASE_URL || 'https://llm.jetstream-cloud.org/api').replace(/\/$/, '');
+export const MODEL = PROVIDER === 'jetstream'
+  ? (process.env.JETSTREAM_MODEL || 'gpt-oss-120b')
+  : (process.env.MODEL || 'gpt-5');
 const EXAMPLE_ROWS = Number.parseInt(process.env.EXAMPLE_ROWS || '12', 10);
 const EXAMPLE_CSV_PATH = path.join(ROOT, 'nyt_connections_groups_history_sept2025.csv');
 
@@ -16,6 +24,60 @@ let client = null;
 function openai() {
   if (!client) client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return client;
+}
+
+/** One model call; returns the reply text. `search` asks OpenAI to use its web
+ *  search tool (Jetstream gets search results in the prompt instead). */
+async function callModel(prompt, { search = false, temperature } = {}) {
+  if (PROVIDER === 'jetstream') {
+    const res = await fetch(`${JETSTREAM_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.JETSTREAM_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }], max_tokens: 12000 }),
+      signal: AbortSignal.timeout(240000),
+    });
+    if (!res.ok) {
+      const err = new Error(`jetstream ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    return String(data.choices?.[0]?.message?.content || '').trim();
+  }
+  const req = { model: MODEL, input: prompt };
+  if (search) req.tools = [{ type: 'web_search' }];
+  if (temperature !== undefined && !/^gpt-5(\b|\D)/.test(MODEL)) req.temperature = temperature;
+  const response = await openai().responses.create(req);
+  return (response.output_text || '').trim();
+}
+
+/** Web research for models that cannot search: a few Tavily queries about the
+ *  player and their town, as a numbered source list for the prompt. Empty if
+ *  there is no TAVILY_API_KEY or the search fails. */
+export async function research(name, location) {
+  const key = process.env.TAVILY_API_KEY;
+  if (!key) return { text: '', sources: [] };
+  const queries = [`"${name}" ${location}`, `${name} ${location} interests hobbies`, `${location} local food traditions landmarks`];
+  const seen = new Set();
+  const sources = [];
+  await Promise.all(queries.map(async (query) => {
+    try {
+      const r = await fetch('https://api.tavily.com/search', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, search_depth: 'basic', max_results: 5 }),
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!r.ok) return;
+      for (const it of (await r.json()).results || []) {
+        if (!it.url || seen.has(it.url)) continue;
+        seen.add(it.url);
+        sources.push({ title: String(it.title || '').slice(0, 160), url: it.url, content: String(it.content || '').replace(/\s+/g, ' ').slice(0, 600) });
+      }
+    } catch { /* one failed query is fine */ }
+  }));
+  const text = sources.map((x, i) => `[${i + 1}] ${x.title}\n${x.url}\n${x.content}`).join('\n\n');
+  return { text, sources };
 }
 
 // Called with one object per OpenAI call; the Express server writes these to logs/app.log.
@@ -147,18 +209,14 @@ function formatDuration(ms) {
 }
 
 async function generateOnce(prompt, attempt) {
-  const req = { model: MODEL, tools: [{ type: 'web_search' }], input: prompt };
-  // Prefer a playful output when supported
-  if (!/^gpt-5(\b|\D)/.test(MODEL)) req.temperature = 0.7;
   const t0 = Date.now();
-  let response;
+  let text;
   try {
-    response = await openai().responses.create(req);
+    text = await callModel(prompt, { search: true, temperature: 0.7 });
   } finally {
     const ms = Date.now() - t0;
-    logEvent({ event: 'openai_call', kind: 'generate', attempt, ms, duration: formatDuration(ms) });
+    logEvent({ event: 'model_call', provider: PROVIDER, kind: 'generate', attempt, ms, duration: formatDuration(ms) });
   }
-  const text = (response.output_text || '').trim();
   let data = extractJsonCandidate(text);
   data = OutputSchema.parse(data);
   // Normalize
@@ -177,7 +235,15 @@ async function generateWithRetries(name, location, recent = [], maxRetries = 2) 
     .filter(r => r && r.name && r.location && Array.isArray(r.categories))
     .map(r => `- ${r.name} | ${r.location}: ${r.categories.map(c => c.label).join(' | ')}`)
     .join('\n');
-  const basePrompt = buildPrompt({ name, location }) + (memo ? `\n\nAVOID REPETITION\nHere are recent players and category themes already used. Be novel and vary themes; avoid repeating these unless justified:\n${memo}` : '');
+  let sourcesBlock = '';
+  if (PROVIDER === 'jetstream') {
+    const found = await research(name, location);
+    logEvent({ event: 'research', sources: found.sources.length });
+    sourcesBlock = found.text
+      ? `\n\nSOURCES\nYou cannot search the web. These search results are all you know about the player and their town. Use only them for facts; tastes and hobbies may still be playful guesses. Every recommendation URL must be copied exactly from this list.\n\n${found.text}`
+      : `\n\nSOURCES\nNo search results were found. Base the puzzle on the town and on playful, friendly guesses, and leave recommendations empty.`;
+  }
+  const basePrompt = buildPrompt({ name, location }) + sourcesBlock + (memo ? `\n\nAVOID REPETITION\nHere are recent players and category themes already used. Be novel and vary themes; avoid repeating these unless justified:\n${memo}` : '');
   let attempt = 0;
   let lastError = null;
   while (attempt <= maxRetries) {
@@ -207,17 +273,14 @@ async function ensureExplanations(data) {
   if (!missing) return data;
   const categoriesJson = JSON.stringify(data.categories.map(c => ({ label: c.label, words: c.words })), null, 2);
   const prompt = `Provide a SHORT explanation (<= 200 chars) for each Connections category below. Return ONLY JSON array of strings in the SAME ORDER as input categories.\n\nCategories:\n${categoriesJson}`;
-  const req = { model: MODEL, input: prompt };
-  if (!/^gpt-5(\b|\D)/.test(MODEL)) req.temperature = 0.2;
   const t0 = Date.now();
-  let response;
+  let text;
   try {
-    response = await openai().responses.create(req);
+    text = await callModel(prompt, { temperature: 0.2 });
   } finally {
     const ms = Date.now() - t0;
-    logEvent({ event: 'openai_call', kind: 'explanations', ms, duration: formatDuration(ms) });
+    logEvent({ event: 'model_call', provider: PROVIDER, kind: 'explanations', ms, duration: formatDuration(ms) });
   }
-  const text = (response.output_text || '').trim();
   let arr;
   try {
     const parsed = extractJsonCandidate(text);
