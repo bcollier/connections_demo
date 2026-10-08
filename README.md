@@ -317,8 +317,6 @@ npm run gifs      # re-records the README GIFs (needs ffmpeg)
 
 ## Notes: using an LLM as a game engine
 
-Rough notes for me to rewrite in my own words. They come from building this, not from measurements, so check each one against my own experience before using it.
-
 - The model is good at *candidates* and bad at *constraints*. It produces lively groups quickly, but it can't be trusted to keep "sixteen different words", so code checks it every time. Split the job: the model proposes, the program disposes.
 - Every rule I could check in code, I moved out of the prompt's hopes and into the validator. The rules I couldn't check (fun, fair, not a resume) stayed in the prompt as plain constraints with numbers ("at most one group about work"), which the model follows far better than adjectives.
 - Examples beat descriptions. Twelve real NYT groups in the prompt did more for the format and the difficulty ladder than any paragraph about what "purple" means.
