@@ -5,7 +5,7 @@ window.CONNECTIONS_PACKS = [
   "name": "About Ben",
   "theme": "ben",
   "blurb": "Five puzzles GPT-5 wrote about me on September 29, 2025, after searching the web for my name and Pittsburgh. Saved from the live generator and played as-is.",
-  "disclaimer": "Written by an AI from public web pages about Ben Collier, then saved. Nothing here was edited by hand except the puzzle titles.",
+  "disclaimer": "Written by an AI from public web pages about Ben Collier, then saved. Nothing was edited by hand except the puzzle titles and some punctuation.",
   "puzzles": [
    {
     "id": "ben-1",
@@ -60,7 +60,7 @@ window.CONNECTIONS_PACKS = [
        "BIGQUERY",
        "DATABRICKS"
       ],
-      "explanation": "One brainy set for the tech‑curious—stack names you’ve seen powering dashboards and experiments.",
+      "explanation": "One brainy set for the tech‑curious, stack names you’ve seen powering dashboards and experiments.",
       "color": "Purple"
      }
     ],
@@ -107,7 +107,7 @@ window.CONNECTIONS_PACKS = [
      "player": "Ben Collier",
      "location": "Pittsburgh, PA"
     },
-    "explanation": "For Ben Collier in Pittsburgh, this Connections set mashes up hometown bites, pixel‑perfect nostalgia, game‑night favorites, and a cheeky wordplay twist—so the table can debate pierogies vs. Primanti, hum arcade jingles, trade sheep for wood, and flex palindrome brainpower, all in one friendly party round.",
+    "explanation": "For Ben Collier in Pittsburgh, this Connections set mashes up hometown bites, pixel‑perfect nostalgia, game‑night favorites, and a cheeky wordplay twist, so the table can debate pierogies vs. Primanti, hum arcade jingles, trade sheep for wood, and flex palindrome brainpower, all in one friendly party round.",
     "categories": [
      {
       "label": "QUARTER‑MUNCHING ARCADE ICONS",
@@ -117,7 +117,7 @@ window.CONNECTIONS_PACKS = [
        "FROGGER",
        "CENTIPEDE"
       ],
-      "explanation": "Cabinet classics that scream neon nostalgia—Ben and friends can almost hear the coin drop.",
+      "explanation": "Cabinet classics that scream neon nostalgia, Ben and friends can almost hear the coin drop.",
       "color": "Yellow"
      },
      {
@@ -128,7 +128,7 @@ window.CONNECTIONS_PACKS = [
        "HEINZ",
        "KLONDIKE"
       ],
-      "explanation": "Steel City comfort-food celebs—perfect for a Yinzer-friendly laugh and a hunger pang mid‑game.",
+      "explanation": "Steel City comfort-food celebs, perfect for a Yinzer-friendly laugh and a hunger pang mid‑game.",
       "color": "Green"
      },
      {
@@ -150,7 +150,7 @@ window.CONNECTIONS_PACKS = [
        "RADAR",
        "LEVEL"
       ],
-      "explanation": "Word‑nerd party trick: each reads the same forward and backward—simple to spot, sneaky to sort.",
+      "explanation": "Word‑nerd party trick: each reads the same forward and backward, simple to spot, sneaky to sort.",
       "color": "Purple"
      }
     ],
@@ -161,7 +161,7 @@ window.CONNECTIONS_PACKS = [
       "type": "article"
      },
      {
-      "title": "Pittsburgh Pierogi Festival — May 17, 2025 (Official site)",
+      "title": "Pittsburgh Pierogi Festival, May 17, 2025 (Official site)",
       "url": "https://pittsburghpierogifestival.com/",
       "type": "article"
      },
@@ -224,7 +224,7 @@ window.CONNECTIONS_PACKS = [
        "GLICKO",
        "BKT"
       ],
-      "explanation": "Core models for estimating learner skill and item difficulty—relevant to language testing and adaptive learning.",
+      "explanation": "Core models for estimating learner skill and item difficulty, relevant to language testing and adaptive learning.",
       "color": "Blue"
      },
      {
@@ -235,7 +235,7 @@ window.CONNECTIONS_PACKS = [
        "OHIO",
        "YOUGHIOGHENY"
       ],
-      "explanation": "Waterways around Point State Park—the local context for a Pittsburgh-based player.",
+      "explanation": "Waterways around Point State Park, the local context for a Pittsburgh-based player.",
       "color": "Purple"
      }
     ],
@@ -246,7 +246,7 @@ window.CONNECTIONS_PACKS = [
       "type": "article"
      },
      {
-      "title": "Statsig blog: Switchback experiments—overview and considerations",
+      "title": "Statsig blog: Switchback experiments, overview and considerations",
       "url": "https://www.statsig.com/blog/switchback-experiments",
       "type": "article"
      },
@@ -266,7 +266,7 @@ window.CONNECTIONS_PACKS = [
       "type": "article"
      },
      {
-      "title": "Ben Collier, PhD—Tepper Business Analytics hiring post (2025)",
+      "title": "Ben Collier, PhD, Tepper Business Analytics hiring post (2025)",
       "url": "https://www.linkedin.com/posts/bcollierphd_apply-interfolio-activity-7305689417376018433-QdAz",
       "type": "article"
      }
@@ -282,7 +282,7 @@ window.CONNECTIONS_PACKS = [
      "player": "Ben Collier",
      "location": "Pittsburgh, PA"
     },
-    "explanation": "Tailoring this set for Ben Collier in Pittsburgh: public info shows you teach business analytics at CMU’s Tepper School and bring prior industry experience from a language-learning company and healthcare analytics, so the puzzle blends Python analytics tools, healthcare interoperability, and spaced-repetition systems—with just one local category for balance. ([poetsandquants.com](https://poetsandquants.com/2025/01/10/meet-carnegie-mellon-teppers-mba-class-of-2026/2/?utm_source=openai))",
+    "explanation": "Tailoring this set for Ben Collier in Pittsburgh: public info shows you teach business analytics at CMU’s Tepper School and bring prior industry experience from a language-learning company and healthcare analytics, so the puzzle blends Python analytics tools, healthcare interoperability, and spaced-repetition systems, with just one local category for balance. ([poetsandquants.com](https://poetsandquants.com/2025/01/10/meet-carnegie-mellon-teppers-mba-class-of-2026/2/?utm_source=openai))",
     "categories": [
      {
       "label": "PITTSBURGH NEIGHBORHOODS",
@@ -292,7 +292,7 @@ window.CONNECTIONS_PACKS = [
        "BLOOMFIELD",
        "LAWRENCEVILLE"
       ],
-      "explanation": "Four adjacent neighborhoods you likely see often around CMU and the East End—one local category for hometown flavor.",
+      "explanation": "Four adjacent neighborhoods you likely see often around CMU and the East End, one local category for hometown flavor.",
       "color": "Yellow"
      },
      {
@@ -303,7 +303,7 @@ window.CONNECTIONS_PACKS = [
        "SEABORN",
        "SCIKIT-LEARN"
       ],
-      "explanation": "Core Python libraries taught and used across business analytics and data science—highly relevant to your CMU teaching in analytics and staying current with tooling releases.",
+      "explanation": "Core Python libraries taught and used across business analytics and data science, highly relevant to your CMU teaching in analytics and staying current with tooling releases.",
       "color": "Green"
      },
      {
@@ -314,7 +314,7 @@ window.CONNECTIONS_PACKS = [
        "ICD",
        "SNOMED"
       ],
-      "explanation": "Widely used clinical and claims/interoperability standards—useful context for analytics projects tied to healthcare data and interoperability testing updates.",
+      "explanation": "Widely used clinical and claims/interoperability standards, useful context for analytics projects tied to healthcare data and interoperability testing updates.",
       "color": "Blue"
      },
      {
@@ -325,7 +325,7 @@ window.CONNECTIONS_PACKS = [
        "SUPERMEMO",
        "HALF-LIFE"
       ],
-      "explanation": "Well-known systems and concepts behind spaced repetition—relevant to applied learning science and scheduling algorithms used in language-learning products.",
+      "explanation": "Well-known systems and concepts behind spaced repetition, relevant to applied learning science and scheduling algorithms used in language-learning products.",
       "color": "Purple"
      }
     ],
@@ -372,7 +372,7 @@ window.CONNECTIONS_PACKS = [
      "player": "Ben Collier",
      "location": "Pittsburgh, PA"
     },
-    "explanation": "Built around your public profile in Pittsburgh—business analytics teaching, hands-on data work, and a Duolingo connection—this set mixes classroom-ready analytics concepts, insider SQL, some app-culture Easter eggs, and one hometown category. It should feel both validating and a little tricky, with the Duolingo and SQL groups upping the challenge.",
+    "explanation": "Built around your public profile in Pittsburgh, business analytics teaching, hands-on data work, and a Duolingo connection, this set mixes classroom-ready analytics concepts, insider SQL, some app-culture Easter eggs, and one hometown category. It should feel both validating and a little tricky, with the Duolingo and SQL groups upping the challenge.",
     "categories": [
      {
       "label": "PITTSBURGH PRO TEAMS",
@@ -382,7 +382,7 @@ window.CONNECTIONS_PACKS = [
        "PIRATES",
        "RIVERHOUNDS"
       ],
-      "explanation": "Major Pittsburgh teams across NFL, NHL, MLB, and USL—your home turf shout-out.",
+      "explanation": "Major Pittsburgh teams across NFL, NHL, MLB, and USL, your home turf shout-out.",
       "color": "Yellow"
      },
      {
@@ -415,18 +415,18 @@ window.CONNECTIONS_PACKS = [
        "ENERGY",
        "DUO"
       ],
-      "explanation": "Gamified features and the mascot associated with the language-learning app—fun nod to your public work history.",
+      "explanation": "Gamified features and the mascot associated with the language-learning app, fun nod to your public work history.",
       "color": "Purple"
      }
     ],
     "recommendations": [
      {
-      "title": "Poets&Quants: New Tepper MBA faculty—Dr. Ben Collier to teach Business Analytics (Jan 10, 2025)",
+      "title": "Poets&Quants: New Tepper MBA faculty, Dr. Ben Collier to teach Business Analytics (Jan 10, 2025)",
       "url": "https://poetsandquants.com/2025/01/10/meet-carnegie-mellon-teppers-mba-class-of-2026/2/",
       "type": "article"
      },
      {
-      "title": "LinkedIn: Ben Collier, PhD—Tepper Business Analytics teaching-track hiring post (Spring 2025)",
+      "title": "LinkedIn: Ben Collier, PhD, Tepper Business Analytics teaching-track hiring post (Spring 2025)",
       "url": "https://www.linkedin.com/posts/bcollierphd_apply-interfolio-activity-7305689417376018433-QdAz",
       "type": "article"
      },
@@ -436,7 +436,7 @@ window.CONNECTIONS_PACKS = [
       "type": "article"
      },
      {
-      "title": "NPR: Duo the owl ‘dies’ and is resurrected—Duolingo’s viral campaign (Feb 2025)",
+      "title": "NPR: Duo the owl ‘dies’ and is resurrected, Duolingo’s viral campaign (Feb 2025)",
       "url": "https://www.npr.org/2025/02/26/nx-s1-5309785/duolingo-owl-mascot-lives",
       "type": "article"
      },
