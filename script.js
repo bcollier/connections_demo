@@ -16,6 +16,18 @@ const DEFAULT_PUZZLE = {
   ],
 };
 
+// Live generation needs server/index.js, which holds the OpenAI key. Without it
+// (the GitHub Pages demo) the Generate button plays saved AI puzzles instead.
+const API_BASE = resolveApiBase();
+const DEMO_MODE = !API_BASE;
+
+function resolveApiBase() {
+  const configured = (window.CONNECTIONS_API_BASE || '').trim();
+  if (configured) return configured.replace(/\/$/, '');
+  const isLocal = location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+  return isLocal ? 'http://localhost:3000' : '';
+}
+
 /** @typedef {{ label: string, words: string[] }} Category */
 
 /**
@@ -68,6 +80,7 @@ const answersEl = document.getElementById('answers');
 const notesEl = document.getElementById('notes');
 const loaderEl = document.getElementById('loader');
 const loaderTextEl = document.getElementById('loaderText');
+const demoNoteEl = document.getElementById('demoNote');
 
 // Loader messages must be defined before any call to startLoader()
 const LOADER_MESSAGES = [
@@ -81,11 +94,17 @@ const LOADER_MESSAGES = [
 let loaderTimer = null;
 
 let state = new GameState(DEFAULT_PUZZLE);
+// Explanation, per-category notes and links for the current puzzle, shown at the end.
+let puzzleMeta = { explanation: '', recommendations: [], categories: [] };
+let demoPuzzles = null;
+let demoIndex = 0;
 
 init();
 
 function init() {
+  if (DEMO_MODE) setUpDemoMode();
   render();
+  renderAnswers();
   wireEvents();
   // Ensure loader is hidden on first load (e.g., after a hard refresh)
   if (typeof stopLoader === 'function') stopLoader();
@@ -100,14 +119,14 @@ function wireEvents() {
   if (answersBtn) answersBtn.addEventListener('click', onToggleAnswers);
 }
 
+// Replays the current puzzle from the start.
 function resetGame() {
-  state = new GameState(DEFAULT_PUZZLE);
+  state = new GameState(state.puzzle);
   render();
   announce('New game started.');
   explanationEl.textContent = '';
   recommendationsEl.innerHTML = '';
-  answersEl.hidden = true;
-  answersEl.innerHTML = '';
+  hideAnswers();
   notesEl.innerHTML = '';
   if (typeof stopLoader === 'function') stopLoader();
 }
@@ -145,7 +164,7 @@ function onSubmit() {
     // Lock this group
     const color = getCategoryColor(first);
     // Derive a short note if we have a matching explanation
-    const catMeta = (window.__lastCategoriesMeta || []).find(c => c.label === first);
+    const catMeta = puzzleMeta.categories.find(c => c.label === first);
     const note = catMeta?.explanation || '';
     state.solvedGroups.push({ label: first, words: selection.slice().sort(), color, note });
     selection.forEach(w => state.unsolvedWords.delete(w));
@@ -156,7 +175,6 @@ function onSubmit() {
 
     // Check for win
     if (state.solvedGroups.length === 4) {
-      announce('You solved all groups!');
       endGame(true);
     }
   } else {
@@ -176,13 +194,20 @@ function endGame(won) {
   if (!won) {
     const remaining = remainingGroups();
     for (const group of remaining) {
-      state.solvedGroups.push({ label: group.label, words: group.words.slice().sort(), color: group.color || 'Yellow' });
+      const note = puzzleMeta.categories.find(c => c.label === group.label)?.explanation || '';
+      state.solvedGroups.push({ label: group.label, words: group.words.slice().sort(), color: group.color || 'Yellow', note });
     }
+    state.unsolvedWords.clear();
+    state.selected.clear();
     renderSolved();
-    announce('Game over.');
+    renderGrid();
+    announce('Game over. Here are the groups.');
   } else {
-    announce('Congratulations!');
+    announce('Congratulations! You solved all four groups.');
   }
+  // Reveal the overall explanation and links once the game ends either way
+  explanationEl.textContent = puzzleMeta.explanation || '';
+  renderCachedRecommendations();
   updateControls();
 }
 
@@ -219,8 +244,11 @@ function renderSolved() {
   for (const group of state.solvedGroups) {
     const div = document.createElement('div');
     div.className = 'group';
-    const words = group.words.join(', ');
-    div.innerHTML = `<span>${group.label}</span><span>${words}</span>`;
+    const label = document.createElement('span');
+    label.textContent = group.label;
+    const words = document.createElement('span');
+    words.textContent = group.words.join(', ');
+    div.append(label, words);
     applyGroupColor(div, group.color);
     solvedEl.appendChild(div);
   }
@@ -236,7 +264,11 @@ function renderGrid() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tile';
-    btn.textContent = word;
+    // Long words shrink to fit the tile instead of breaking mid-word (styles.css)
+    const text = document.createElement('span');
+    text.textContent = word;
+    text.style.setProperty('--len', Math.max(...word.split(' ').map(part => part.length)));
+    btn.appendChild(text);
     btn.dataset.word = word;
     if (state.selected.has(word)) btn.classList.add('selected');
     btn.addEventListener('click', () => onTileClick(word, btn));
@@ -308,77 +340,140 @@ function shuffleArray(arr) {
 async function onGenerate() {
   const name = (nameInput?.value || '').trim() || 'Ben Collier';
   const location = (locationInput?.value || '').trim() || 'Pittsburgh, PA';
+  const idleLabel = generateBtn.textContent;
   try {
     generateBtn.disabled = true;
-    generateBtn.textContent = 'Generating…';
+    generateBtn.textContent = DEMO_MODE ? 'Loading…' : 'Generating…';
     startLoader();
-    // client-side breadcrumb
-    try { await fetch('http://localhost:3000/api/client-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: 'info', message: 'client_generate_click', context: { name, location } }) }); } catch {}
 
-    const res = await fetch('http://localhost:3000/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, location }),
-    });
-    if (!res.ok) {
-      try { await fetch('http://localhost:3000/api/client-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: 'error', message: 'client_generate_http_error', context: { status: res.status } }) }); } catch {}
-    }
-    const data = await res.json();
-
-    if (!data || !Array.isArray(data.categories) || data.categories.length !== 4) {
-      throw new Error('Invalid AI response');
-    }
-
-    // Replace current puzzle
-    const newPuzzle = { categories: data.categories.map(c => ({
-      label: String(c.label),
-      words: c.words.map(String).map(w => w.toUpperCase()),
-      color: c.color || undefined,
-    })) };
-
-    state = new GameState(newPuzzle);
-    render();
-
-    // Hide explanation & references until completion; cache for later reveal
-    explanationEl.textContent = '';
-    recommendationsEl.innerHTML = '';
-    window.__lastOverallExplanation = data.explanation || '';
-    window.__lastRecommendations = Array.isArray(data.recommendations) ? data.recommendations : [];
-
-    // Build answers box if per-category explanations returned
-    answersEl.innerHTML = '';
-    if (Array.isArray(data.categories)) {
-      for (const cat of data.categories) {
-        const row = document.createElement('div');
-        row.className = 'answer';
-        const label = document.createElement('div');
-        label.className = 'label';
-        label.textContent = cat.label;
-        const words = document.createElement('div');
-        words.textContent = cat.words.join(', ');
-        const expl = document.createElement('div');
-        expl.textContent = cat.explanation || '';
-        row.appendChild(label);
-        row.appendChild(words);
-        if (expl.textContent) row.appendChild(expl);
-        answersEl.appendChild(row);
+    let data;
+    let fellBack = false;
+    if (DEMO_MODE) {
+      data = await nextDemoPuzzle();
+    } else {
+      try {
+        data = await fetchGeneratedPuzzle(name, location);
+      } catch (e) {
+        // Server not running or returned something unusable: play a saved AI puzzle instead
+        console.error(e);
+        clientLog('error', 'client_generate_exception', { err: String(e) });
+        data = await nextDemoPuzzle();
+        fellBack = true;
       }
     }
 
-    // Save meta for per-group notes
-    window.__lastCategoriesMeta = (data.categories || []).map(c => ({ label: String(c.label), explanation: c.explanation || '' }));
-
-    flashMessage('AI puzzle loaded!', 'success');
+    loadPuzzle(data);
+    if (DEMO_MODE) flashMessage(`Saved AI puzzle ${demoIndex} of ${demoPuzzles.length} loaded.`, 'success');
+    else if (fellBack) flashMessage('Could not reach the AI server, so this is a saved AI puzzle.', 'warn');
+    else flashMessage('AI puzzle loaded!', 'success');
     // no celebration here; celebrate when a group is actually solved
   } catch (e) {
     console.error(e);
-    try { await fetch('http://localhost:3000/api/client-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: 'error', message: 'client_generate_exception', context: { err: String(e) } }) }); } catch {}
-    flashMessage('AI generation failed; using fallback.', 'error');
+    flashMessage('Could not load a puzzle. Try again.', 'error');
   } finally {
     generateBtn.disabled = false;
-    generateBtn.textContent = 'Generate a Puzzle About Me!';
+    generateBtn.textContent = idleLabel;
     stopLoader();
   }
+}
+
+async function fetchGeneratedPuzzle(name, location) {
+  clientLog('info', 'client_generate_click', { name, location });
+  const res = await fetch(`${API_BASE}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, location }),
+  });
+  if (!res.ok) {
+    clientLog('error', 'client_generate_http_error', { status: res.status });
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// Best-effort breadcrumb to the server log; never blocks the game
+function clientLog(level, message, context) {
+  if (DEMO_MODE) return;
+  fetch(`${API_BASE}/api/client-log`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level, message, context }),
+  }).catch(() => {});
+}
+
+// Cycles through the saved puzzles, newest first, so each click shows a different one
+async function nextDemoPuzzle() {
+  if (!demoPuzzles) demoPuzzles = window.CONNECTIONS_DEMO_PUZZLES || [];
+  if (!demoPuzzles.length) throw new Error('No demo puzzles');
+  const puzzle = demoPuzzles[demoIndex % demoPuzzles.length];
+  demoIndex = (demoIndex % demoPuzzles.length) + 1;
+  return puzzle;
+}
+
+function loadPuzzle(data) {
+  if (!data || !Array.isArray(data.categories) || data.categories.length !== 4) {
+    throw new Error('Invalid AI response');
+  }
+
+  // Replace current puzzle
+  const newPuzzle = { categories: data.categories.map(c => ({
+    label: String(c.label),
+    words: c.words.map(String).map(w => w.toUpperCase()),
+    color: c.color || undefined,
+  })) };
+
+  state = new GameState(newPuzzle);
+  puzzleMeta = {
+    explanation: data.explanation || '',
+    recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
+    categories: data.categories.map(c => ({ label: String(c.label), explanation: c.explanation || '' })),
+  };
+  render();
+
+  // Hide explanation & references until the game ends
+  explanationEl.textContent = '';
+  recommendationsEl.innerHTML = '';
+  notesEl.innerHTML = '';
+  hideAnswers();
+  renderAnswers();
+}
+
+function setUpDemoMode() {
+  // The saved puzzles are all about Ben Collier in Pittsburgh, so the inputs show that
+  for (const [input, value] of [[nameInput, 'Ben Collier'], [locationInput, 'Pittsburgh, PA']]) {
+    if (!input) continue;
+    input.value = value;
+    input.readOnly = true;
+  }
+  if (generateBtn) generateBtn.textContent = 'Load an AI Puzzle About Ben';
+  if (demoNoteEl) demoNoteEl.hidden = false;
+}
+
+// Answers box: every group with its words, plus the AI's reason when there is one
+function renderAnswers() {
+  answersEl.innerHTML = '';
+  for (const cat of state.puzzle.categories) {
+    const row = document.createElement('div');
+    row.className = 'answer';
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = cat.label;
+    const words = document.createElement('div');
+    words.textContent = cat.words.join(', ');
+    row.append(label, words);
+    const reason = puzzleMeta.categories.find(c => c.label === cat.label)?.explanation;
+    if (reason) {
+      const expl = document.createElement('div');
+      expl.textContent = reason;
+      row.appendChild(expl);
+    }
+    answersEl.appendChild(row);
+  }
+}
+
+function hideAnswers() {
+  answersEl.hidden = true;
+  answersBtn.textContent = 'Show answers';
 }
 
 function onToggleAnswers() {
@@ -408,13 +503,7 @@ function celebrateOnSolve(count) {
   if (count <= 0) return; // only on actual solves
   const intensity = ['small', 'medium', 'large', 'mega'][Math.min(count - 1, 3)];
   spawnConfetti(intensity);
-  if (count === 4) {
-    spawnFireworks();
-    // Reveal overall explanation and recommendations on completion
-    explanationEl.textContent = window.__lastOverallExplanation || '';
-    renderNotes();
-    renderCachedRecommendations();
-  }
+  if (count === 4) spawnFireworks();
 }
 
 // Confetti particles
@@ -466,9 +555,9 @@ function renderNotes() {
 
 function renderCachedRecommendations() {
   recommendationsEl.innerHTML = '';
-  const recs = window.__lastRecommendations || [];
-  for (const rec of recs) {
-    if (!rec || !rec.url) continue;
+  for (const rec of puzzleMeta.recommendations) {
+    // Model output: only follow plain web links
+    if (!rec || !/^https?:\/\//i.test(rec.url || '')) continue;
     const a = document.createElement('a');
     a.href = rec.url;
     a.target = '_blank';

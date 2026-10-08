@@ -1,75 +1,66 @@
-# Connections-style Game
+# Connections About You
 
-A simple, static web app inspired by the NYT Connections game. There are 16 words that form four related groups of four. Select four related words and press Submit. You have 3 mistakes allowed before the game ends.
+**Play the demo:** https://bcollier.github.io/connections_demo/
 
-## Run locally
+A Connections-style word game in the style of the NYT puzzle, where an AI writes the four groups about the player. Type a name and a town, and a small Node server asks GPT-5, with web search, for four groups of four words drawn from that person's public footprint, their city, and some playful guesses about their tastes. Find the four groups with no more than three mistakes. When the game ends, the page shows why each group was chosen and links to what the AI read.
 
-Open `index.html` in a browser:
+<p align="center"><img src="docs/screenshot.jpg" alt="The game mid-puzzle: QUARTER-MUNCHING ARCADE ICONS solved in yellow above a grid of twelve words, two of them selected" width="720"></p>
 
-- macOS Finder: double-click `index.html`.
-- Terminal:
-```bash
-open /Users/bcollier/Code/connections_demo/index.html
-```
+## The GitHub Pages demo
 
-No build step is required.
+GitHub Pages only serves static files, and an OpenAI key cannot live in a public web page: anything the browser can read, a visitor can read. So the demo has no live generation. Its button plays the five puzzles GPT-5 wrote for "Ben Collier, Pittsburgh, PA" on September 29, 2025, one per click, saved from the server's history in [`demo/puzzles.js`](demo/puzzles.js). Everything else is the real game: selection, mistakes, the colored groups, the per-group notes, the closing explanation, and the links.
 
-## Optional: Enable AI-generated puzzles
+[`viewer.html`](https://bcollier.github.io/connections_demo/viewer.html) lists the same saved puzzles side by side.
 
-This project includes a tiny Node server that calls OpenAI with web search to generate puzzle categories and words tailored to a name and location.
+## Run it with live AI generation
 
-1) Install dependencies and set your API key:
+1. Install dependencies and add an OpenAI key:
 
-```bash
-cd /Users/bcollier/Code/connections_demo
-npm install
-cp .env.example .env
-# edit .env and set OPENAI_API_KEY
-```
+   ```bash
+   npm install
+   cp .env.example .env
+   # edit .env and set OPENAI_API_KEY
+   ```
 
-2) Start the server:
+2. Start the server (port 3000):
 
-```bash
-npm run start
-# Server runs on http://localhost:3000
-```
+   ```bash
+   npm start
+   ```
 
-3) In the web page, enter your name and location and click "Generate puzzle with AI". The app will fetch `/api/generate` and load a new puzzle. If generation fails, a safe fallback puzzle is used.
+3. Open `index.html` from disk, or serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000. On `localhost` or a file the page calls `http://localhost:3000` automatically. Enter a name and a location and press **Generate a Puzzle About Me!** A puzzle takes one to three minutes because the model searches the web first.
 
-Model configuration
-- Defaults to GPT-5 with web search. To override:
+If the server is not running, the page says so and plays a saved puzzle instead. To point a hosted copy at a server you deploy yourself, set `window.CONNECTIONS_API_BASE` in [`config.js`](config.js).
 
-```bash
-echo "MODEL=gpt-5" >> .env  # or set another supported model
-```
+## How a puzzle is made
 
-## Customize the puzzle
+`server/index.js` builds one prompt and calls the OpenAI Responses API with the `web_search` tool.
 
-Edit `script.js` and change `DEFAULT_PUZZLE.categories` to your own labels and words.
+- **Rules for the groups.** At least two groups are about fun things (food, games, music, nostalgia), at most one is about work, and at most one is about the place. Sixteen unique words, family friendly, public information only.
+- **Examples of good groups.** The prompt includes real NYT Connections groups from [`nyt_connections_groups_history_sept2025.csv`](nyt_connections_groups_history_sept2025.csv) to show the format and the difficulty ladder (yellow easiest, then green, blue, and purple for wordplay).
+- **Memory between players.** The labels of the last 20 puzzles in `data/history.jsonl` go into the prompt with a request not to repeat them.
+- **Checks.** The reply is parsed out of the model text, validated with a zod schema, and normalized. If any word repeats across groups, it asks again, up to two retries. Missing per-group explanations are filled by a second, cheaper call.
+- **Fallback.** If generation fails, the server returns a fixed puzzle instead of an error.
 
-- Keep four categories.
-- Each with exactly four distinct words.
-- Words are shown in uppercase for consistency, but any strings work.
+Every request and model reply is appended to `logs/app.log`, and every finished puzzle to `data/history.jsonl`. The log is git-ignored; it holds the full prompts and model output.
+
+## Files
+
+| Path | What it is |
+| --- | --- |
+| `index.html`, `styles.css`, `script.js` | The game. No build step and no libraries. |
+| `config.js` | Where the generator runs. Empty means demo mode. |
+| `demo/puzzles.js` | The saved GPT-5 puzzles the demo plays. |
+| `viewer.html` | Lists generated puzzles, from the server's history or the saved ones. |
+| `server/index.js` | Express server: `POST /api/generate`, `GET /api/history`, `GET /api/ping`, `POST /api/client-log`. |
+| `data/history.jsonl` | Every puzzle the server has generated. |
+| `nyt_connections_groups_*.csv` | Example groups used in the prompt. |
 
 ## Gameplay
 
-- Select tiles to choose up to four words.
-- Click Submit to check.
-- Correct sets are locked and displayed above the grid.
-- You get 3 total mistakes. After that, the game reveals remaining groups and ends.
-- Shuffle reorders remaining tiles. Deselect clears your current selection. Reset starts a new game.
+- Select four tiles and press **Submit**.
+- A correct set locks in at the top, tinted with its difficulty color. A wrong one costs a mistake; three mistakes end the game and reveal the rest.
+- **Shuffle** reorders the tiles, **Deselect** clears your picks, **Show answers** lists every group, and **Reset Game** replays the current puzzle.
+- Each solved group sets off confetti, bigger every time, and solving all four sets off fireworks. The animations are plain CSS and JavaScript.
 
-## Colors and celebrations
-
-Each category includes a color that reflects its difficulty (inspired by NYT):
-
-- Yellow: simplest
-- Green: simple
-- Blue: medium
-- Purple: hardest
-
-When a group is solved, its solved chip is tinted with the assigned color. The app also triggers celebratory animations with increasing intensity for the 1st, 2nd, and 3rd solved groups, and a large fireworks-style celebration when all four groups are solved. Animations are client-side only and require no external libraries.
-
-## Notes
-
-This app is intentionally minimal and client-only, no tracking, and works offline once loaded.
+To change the starting puzzle, edit `DEFAULT_PUZZLE` in `script.js`: four categories of four distinct words, each with a color.
