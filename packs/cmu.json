@@ -1,0 +1,165 @@
+{
+  "id": "cmu",
+  "name": "Carnegie Mellon",
+  "theme": "cmu",
+  "blurb": "Buggy, buildings, presidents, alumni and the tech that started on a Pittsburgh hillside.",
+  "disclaimer": "Made by a Carnegie Mellon faculty member for fun. Not an official university product, and no university logos or marks are used.",
+  "puzzles": [
+    {
+      "id": "cmu-1",
+      "title": "My Heart Is in the Work",
+      "intro": "Andrew Carnegie's motto, and a grid full of Carnegie Mellon: a carnival weekend, the presidents on the buildings, inventions that started here, and four alumni whose names do double duty.",
+      "explanation": "PORTER looks like a building (Porter Hall), and WARNER sounds like show business, but Warner is a president with a hall of his own and Porter is Billy Porter of the drama school.",
+      "categories": [
+        {
+          "label": "SPRING CARNIVAL",
+          "words": [
+            "BUGGY",
+            "BOOTH",
+            "MOBOT",
+            "MIDWAY"
+          ],
+          "explanation": "The buggy races through Schenley Park, the student-built booths on the Midway, and the Mobot race for small line-following robots.",
+          "color": "Yellow"
+        },
+        {
+          "label": "PRESIDENTS WITH A BUILDING",
+          "words": [
+            "WARNER",
+            "CYERT",
+            "DOHERTY",
+            "COHON"
+          ],
+          "explanation": "Warner Hall, Cyert Hall, Doherty Hall and the Cohon University Center are named for four of the university's presidents.",
+          "color": "Green"
+        },
+        {
+          "label": "BORN AT CARNEGIE MELLON",
+          "words": [
+            "CAPTCHA",
+            "LYCOS",
+            "DUOLINGO",
+            "MACH"
+          ],
+          "explanation": "The \"are you human?\" test, an early search engine, the language app, and the Mach kernel that macOS still builds on.",
+          "color": "Blue"
+        },
+        {
+          "label": "DRAMA ALUMNI WHOSE NAMES ARE WORDS",
+          "words": [
+            "HUNTER",
+            "LIGHT",
+            "PORTER",
+            "GAD"
+          ],
+          "explanation": "Holly Hunter, Judith Light, Billy Porter and Josh Gad all studied in the School of Drama.",
+          "color": "Purple"
+        }
+      ]
+    },
+    {
+      "id": "cmu-2",
+      "title": "Tartan Pride",
+      "intro": "Bagpipes on the lawn, names on the buildings, the people who started artificial intelligence here, and a few words you will only hear in Pittsburgh.",
+      "explanation": "NEWELL and SIMON share a building name (Newell-Simon Hall), so they tempt the buildings group, but they belong with the AI pioneers. And REDDY is a person, not \"redd up.\"",
+      "categories": [
+        {
+          "label": "SCOTTISH SPIRIT",
+          "words": [
+            "SCOTTY",
+            "TARTAN",
+            "KILTIE",
+            "BAGPIPE"
+          ],
+          "explanation": "The Scottish terrier mascot, the team name, the Kiltie Band, and the instrument you can earn a degree in here. Andrew Carnegie was born in Scotland.",
+          "color": "Yellow"
+        },
+        {
+          "label": "CAMPUS BUILDINGS",
+          "words": [
+            "WEAN",
+            "HUNT",
+            "GATES",
+            "TEPPER"
+          ],
+          "explanation": "Wean Hall, Hunt Library, the Gates Hillman Centers, and the Tepper Quad.",
+          "color": "Green"
+        },
+        {
+          "label": "AI PIONEERS ON THE FACULTY",
+          "words": [
+            "NEWELL",
+            "SIMON",
+            "REDDY",
+            "FAHLMAN"
+          ],
+          "explanation": "Allen Newell and Herbert Simon shared a Turing Award, Raj Reddy won one and was the Robotics Institute's founding director, and Scott Fahlman proposed the :-) emoticon in 1982.",
+          "color": "Blue"
+        },
+        {
+          "label": "PITTSBURGHESE",
+          "words": [
+            "YINZ",
+            "NEBBY",
+            "SLIPPY",
+            "GUMBAND"
+          ],
+          "explanation": "You all, nosy, slippery, and a rubber band.",
+          "color": "Purple"
+        }
+      ]
+    },
+    {
+      "id": "cmu-3",
+      "title": "Carnival Weekend",
+      "intro": "Race day in Schenley Park. Find the buggy words, the alumni, the clubs in the bag, and four things that come after the word Carnegie.",
+      "explanation": "Every buggy has a DRIVER, but so does every golf bag, and the buggy group has enough words without it. GOSLING is James Gosling, who earned his PhD here and went on to create Java.",
+      "categories": [
+        {
+          "label": "GOLF CLUBS",
+          "words": [
+            "DRIVER",
+            "IRON",
+            "WEDGE",
+            "PUTTER"
+          ],
+          "explanation": "Four clubs in the bag. DRIVER is the trap: a buggy has one too.",
+          "color": "Yellow"
+        },
+        {
+          "label": "BUGGY LINGO",
+          "words": [
+            "PUSHER",
+            "CHUTE",
+            "FREEROLL",
+            "SWEEPSTAKES"
+          ],
+          "explanation": "Pushers run the uphill legs, the freeroll is the coast down Schenley Drive, the chute is the sharp turn at the bottom, and Sweepstakes is the race's official name.",
+          "color": "Green"
+        },
+        {
+          "label": "FAMOUS ALUMNI",
+          "words": [
+            "WARHOL",
+            "NASH",
+            "GOSLING",
+            "KWOLEK"
+          ],
+          "explanation": "Andy Warhol (pop art), John Nash (game theory), James Gosling (the Java language), and Stephanie Kwolek (Kevlar), who studied at Margaret Morrison Carnegie College.",
+          "color": "Blue"
+        },
+        {
+          "label": "CARNEGIE ___",
+          "words": [
+            "HALL",
+            "DELI",
+            "TECH",
+            "LIBRARY"
+          ],
+          "explanation": "Carnegie Hall in New York, the Carnegie Deli near it, Carnegie Tech (this school's name until 1967), and the Carnegie Library of Pittsburgh, next door to campus.",
+          "color": "Purple"
+        }
+      ]
+    }
+  ]
+}

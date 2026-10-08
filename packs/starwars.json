@@ -1,0 +1,165 @@
+{
+  "id": "starwars",
+  "name": "Star Wars",
+  "theme": "starwars",
+  "blurb": "Droids, bounty hunters, famous lines and a few traps for anyone who has seen the films more than once.",
+  "disclaimer": "Fan-made trivia. Not affiliated with or endorsed by Lucasfilm or Disney. No logos, film stills or official fonts are used.",
+  "puzzles": [
+    {
+      "id": "sw-1",
+      "title": "A Galaxy of Words",
+      "intro": "The grid is in turmoil. Sixteen words have scattered across the board, and only a patient player can sort them into four groups before four mistakes run out. Droids hide among bounty hunters, and a famous line or two is waiting to trip you up....",
+      "explanation": "Six tiles look like droid designations, but two of them, IG-88 and 4-LOM, are also on Vader's bridge in The Empire Strikes Back, and only four bounty hunters are on the board. HOPE fits both the film titles and the famous lines; the lines need it more.",
+      "categories": [
+        {
+          "label": "DROIDS",
+          "words": [
+            "R2-D2",
+            "C-3PO",
+            "BB-8",
+            "K-2SO"
+          ],
+          "explanation": "The astromech, the protocol droid, the sequel trilogy's rolling sidekick, and the reprogrammed Imperial droid from Rogue One.",
+          "color": "Yellow"
+        },
+        {
+          "label": "BOUNTY HUNTERS VADER HIRES",
+          "words": [
+            "BOSSK",
+            "DENGAR",
+            "IG-88",
+            "4-LOM"
+          ],
+          "explanation": "Lined up on the Executor's bridge in The Empire Strikes Back to hunt the Millennium Falcon. IG-88 and 4-LOM are droids too, which is the trap.",
+          "color": "Green"
+        },
+        {
+          "label": "LAST WORD OF A FILM SUBTITLE",
+          "words": [
+            "MENACE",
+            "CLONES",
+            "SITH",
+            "BACK"
+          ],
+          "explanation": "The Phantom Menace, Attack of the Clones, Revenge of the Sith, and The Empire Strikes Back. A New Hope would fit, but HOPE is needed elsewhere.",
+          "color": "Blue"
+        },
+        {
+          "label": "LAST WORD OF A FAMOUS LINE",
+          "words": [
+            "TRAP",
+            "TRY",
+            "HOPE",
+            "KNOW"
+          ],
+          "explanation": "\"It's a trap!\" (Ackbar), \"There is no try\" (Yoda), \"You're my only hope\" (Leia's message), and \"I know\" (Han).",
+          "color": "Purple"
+        }
+      ]
+    },
+    {
+      "id": "sw-2",
+      "title": "The Saber Test",
+      "intro": "A new board has appeared on the edge of the Outer Rim. Its colors look familiar, its creatures are hungry, and its heroes are not all where they seem. Some names are only one letter away from something else entirely....",
+      "explanation": "Rey, Rose, Luke and Han all help the Resistance, which makes the Resistance group look like it has eight members. Only four names turn into new words when you add a letter in front, so those four belong together.",
+      "categories": [
+        {
+          "label": "LIGHTSABER COLORS",
+          "words": [
+            "BLUE",
+            "GREEN",
+            "PURPLE",
+            "YELLOW"
+          ],
+          "explanation": "Blue and green for most Jedi, purple for Mace Windu, and yellow for Rey at the very end of The Rise of Skywalker. They are also this game's four difficulty colors.",
+          "color": "Yellow"
+        },
+        {
+          "label": "CREATURES",
+          "words": [
+            "WAMPA",
+            "RANCOR",
+            "TAUNTAUN",
+            "BANTHA"
+          ],
+          "explanation": "The ice monster on Hoth, Jabba's pit beast, the mount Han rides out into the snow, and the shaggy beasts the Tusken Raiders ride on Tatooine.",
+          "color": "Green"
+        },
+        {
+          "label": "THE RESISTANCE",
+          "words": [
+            "FINN",
+            "POE",
+            "HOLDO",
+            "LEIA"
+          ],
+          "explanation": "The former stormtrooper, the hotshot pilot, the vice admiral of The Last Jedi, and the general who leads them all. Rey, Rose, Luke and Han fit too, which is the trap.",
+          "color": "Blue"
+        },
+        {
+          "label": "ADD A LETTER IN FRONT",
+          "words": [
+            "REY",
+            "LUKE",
+            "ROSE",
+            "HAN"
+          ],
+          "explanation": "P+REY is PREY, F+LUKE is FLUKE, P+ROSE is PROSE, and T+HAN is THAN.",
+          "color": "Purple"
+        }
+      ]
+    },
+    {
+      "id": "sw-3",
+      "title": "Outer Rim Run",
+      "intro": "Far from the core worlds, a bounty board flickers to life. Prequel planets, dark lords, a quiet bounty hunter and his small green foundling all wait in the grid. Look up, look around, and watch your step....",
+      "explanation": "MOON looks like it belongs with the planets, and SKY points straight at the Skywalkers. Both are halves of a ___WALKER word, along with SLEEP and JAY.",
+      "categories": [
+        {
+          "label": "PREQUEL PLANETS",
+          "words": [
+            "NABOO",
+            "KAMINO",
+            "GEONOSIS",
+            "MUSTAFAR"
+          ],
+          "explanation": "Padmé's home world, the ocean planet where the clones are grown, the droid factory world, and the lava planet where Anakin and Obi-Wan duel.",
+          "color": "Yellow"
+        },
+        {
+          "label": "DARTH ___",
+          "words": [
+            "VADER",
+            "MAUL",
+            "SIDIOUS",
+            "TYRANUS"
+          ],
+          "explanation": "The Sith names of Anakin Skywalker, Palpatine's horned apprentice, Palpatine himself, and Count Dooku.",
+          "color": "Green"
+        },
+        {
+          "label": "THE MANDALORIAN",
+          "words": [
+            "GROGU",
+            "BESKAR",
+            "IG-11",
+            "GIDEON"
+          ],
+          "explanation": "The foundling, the Mandalorian steel, the assassin droid turned nurse, and Moff Gideon, who hunts them.",
+          "color": "Blue"
+        },
+        {
+          "label": "___WALKER",
+          "words": [
+            "SKY",
+            "MOON",
+            "SLEEP",
+            "JAY"
+          ],
+          "explanation": "Skywalker, moonwalker, sleepwalker and jaywalker. MOON is the trap: it looks like a place.",
+          "color": "Purple"
+        }
+      ]
+    }
+  ]
+}

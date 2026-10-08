@@ -1,0 +1,165 @@
+{
+  "id": "lotr",
+  "name": "The Lord of the Rings",
+  "theme": "lotr",
+  "blurb": "Hobbits, rings, swords and second breakfasts, from the books and the Peter Jackson films.",
+  "disclaimer": "Fan-made trivia. Not affiliated with or endorsed by the Tolkien Estate, Middle-earth Enterprises, or the film studios. The runes on this page are original doodles, not Tolkien's alphabets.",
+  "puzzles": [
+    {
+      "id": "lotr-1",
+      "title": "The Fellowship",
+      "intro": "Sixteen words set out from the Shire. Four are hobbits, four are numbers, four are foes, and four are hiding something alive inside them.",
+      "explanation": "BRANDYBUCK is Merry's family name, so it pulls toward the hobbits, and WORMTONGUE pulls toward the villains. Both are hiding an animal: a buck and a worm, along with the bear in TREEBEARD and the ant in PALANTIR.",
+      "categories": [
+        {
+          "label": "HOBBITS",
+          "words": [
+            "FRODO",
+            "SAM",
+            "MERRY",
+            "BILBO"
+          ],
+          "explanation": "The Ring-bearer, his gardener, his cousin Meriadoc, and the uncle who found the Ring in Gollum's cave. Pippin sat this one out.",
+          "color": "Yellow"
+        },
+        {
+          "label": "RINGS OF POWER, BY NUMBER",
+          "words": [
+            "THREE",
+            "SEVEN",
+            "NINE",
+            "ONE"
+          ],
+          "explanation": "Three for the Elven-kings, seven for the Dwarf-lords, nine for Mortal Men, and one for the Dark Lord. NINE is also the number of Ringwraiths.",
+          "color": "Green"
+        },
+        {
+          "label": "FOES OF THE FELLOWSHIP",
+          "words": [
+            "SAURON",
+            "SARUMAN",
+            "SHELOB",
+            "BALROG"
+          ],
+          "explanation": "The Dark Lord, the wizard who turned, the great spider at Cirith Ungol, and the demon of Moria. Wormtongue is a villain too, which is the trap.",
+          "color": "Blue"
+        },
+        {
+          "label": "HIDDEN ANIMALS",
+          "words": [
+            "TREEBEARD",
+            "WORMTONGUE",
+            "PALANTIR",
+            "BRANDYBUCK"
+          ],
+          "explanation": "tree-BEAR-d, WORM-tongue, pal-ANT-ir and brandy-BUCK.",
+          "color": "Purple"
+        }
+      ]
+    },
+    {
+      "id": "lotr-2",
+      "title": "Second Breakfast",
+      "intro": "Something is cooking in the grid. There are meals to eat, blades to name, a ranger with too many names, and a hobbit with strong opinions about potatoes.",
+      "explanation": "STEW looks like a hobbit meal and STICK looks like a weapon, but both come from Sam's speech about potatoes in The Two Towers film: boil 'em, mash 'em, stick 'em in a stew.",
+      "categories": [
+        {
+          "label": "HOBBIT MEALS",
+          "words": [
+            "ELEVENSES",
+            "LUNCHEON",
+            "DINNER",
+            "SUPPER"
+          ],
+          "explanation": "From Pippin's list in The Fellowship of the Ring film, right after second breakfast: elevenses, luncheon, afternoon tea, dinner and supper.",
+          "color": "Yellow"
+        },
+        {
+          "label": "NAMED BLADES",
+          "words": [
+            "STING",
+            "ANDURIL",
+            "GLAMDRING",
+            "ORCRIST"
+          ],
+          "explanation": "Bilbo's and then Frodo's elven sword, Aragorn's reforged Narsil, Gandalf's sword, and Thorin's sword from The Hobbit.",
+          "color": "Green"
+        },
+        {
+          "label": "ARAGORN'S OTHER NAMES",
+          "words": [
+            "STRIDER",
+            "ELESSAR",
+            "ESTEL",
+            "WINGFOOT"
+          ],
+          "explanation": "What the people of Bree call him, his name as king, the name he was raised under in Rivendell, and the name Éomer gives him after his long run across Rohan.",
+          "color": "Blue"
+        },
+        {
+          "label": "SAM'S POTATO RECIPE",
+          "words": [
+            "BOIL",
+            "MASH",
+            "STICK",
+            "STEW"
+          ],
+          "explanation": "\"Po-tay-toes! Boil 'em, mash 'em, stick 'em in a stew.\" Sam, to Gollum, in The Two Towers film.",
+          "color": "Purple"
+        }
+      ]
+    },
+    {
+      "id": "lotr-3",
+      "title": "A Long Walk to Mordor",
+      "intro": "The road goes on and on. Pick out the places, the companions, the horses, and four words that close some of the most quoted lines in the films.",
+      "explanation": "MORDOR looks like it belongs with the other places, but it ends Boromir's \"One does not simply walk into Mordor.\" BILL the pony looks like a companion of the Fellowship, and in a way he was, but he is a horse here.",
+      "categories": [
+        {
+          "label": "PLACES IN MIDDLE-EARTH",
+          "words": [
+            "GONDOR",
+            "ROHAN",
+            "SHIRE",
+            "RIVENDELL"
+          ],
+          "explanation": "The realm of Minas Tirith, the horse-lords' country, the hobbits' home, and Elrond's house in the valley.",
+          "color": "Yellow"
+        },
+        {
+          "label": "FELLOWSHIP MEMBERS, NOT HOBBITS",
+          "words": [
+            "GANDALF",
+            "LEGOLAS",
+            "GIMLI",
+            "BOROMIR"
+          ],
+          "explanation": "The wizard, the elf, the dwarf and the man of Gondor. Aragorn is the fifth, and he is not on the board.",
+          "color": "Green"
+        },
+        {
+          "label": "HORSES AND PONIES",
+          "words": [
+            "SHADOWFAX",
+            "BILL",
+            "ASFALOTH",
+            "SNOWMANE"
+          ],
+          "explanation": "Gandalf's horse, Sam's pony, the elf-horse that carries Frodo to the Ford of Bruinen, and King Théoden's horse.",
+          "color": "Blue"
+        },
+        {
+          "label": "LAST WORD OF A FAMOUS LINE",
+          "words": [
+            "PASS",
+            "FOOLS",
+            "AXE",
+            "MORDOR"
+          ],
+          "explanation": "\"You shall not pass!\" and \"Fly, you fools!\" (Gandalf), \"And my axe!\" (Gimli), and \"One does not simply walk into Mordor\" (Boromir), all from The Fellowship of the Ring film.",
+          "color": "Purple"
+        }
+      ]
+    }
+  ]
+}
