@@ -8,13 +8,20 @@ export const COLORS = ['Yellow', 'Green', 'Blue', 'Purple'];
 // What the model must return, and what every saved or hand-written puzzle must
 // look like: four groups of four words, a label, an optional reason per group.
 export const OutputSchema = z.object({
+  title: z.string().max(90).optional(),
   categories: z.array(z.object({
     label: z.string().min(1).max(40),
     words: z.array(z.string().min(1).max(20)).length(4),
-    explanation: z.string().min(1).max(240).optional(),
+    explanation: z.string().min(1).max(400).optional(),
     color: z.string().optional(),
+    // News puzzles: which numbered story (1-based) inspired the group; the server
+    // swaps in the story's title and link. Study cards: a short definition per word.
+    story_index: z.number().int().min(1).optional(),
+    story: z.object({ title: z.string(), url: z.string().url(), summary: z.string().optional(), section: z.string().optional(), published: z.string().nullable().optional(), via: z.string().optional() }).optional(),
+    definitions: z.array(z.string().max(200)).length(4).optional(),
   })).length(4),
   explanation: z.string().min(1),
+  source: z.object({ id: z.string(), name: z.string(), short: z.string().optional(), home: z.string().url().optional(), date: z.string().optional() }).optional(),
   recommendations: z.array(z.object({
     title: z.string(),
     url: z.string().url(),

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Connections</title>
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .card { padding: 16px 18px; border-radius: 6px; color: var(--ink); background: var(--card); box-shadow: 0 14px 22px -12px rgba(0,0,0,.6); margin-bottom: 14px; }
+    .card h2 { margin: 0 0 10px; font-family: "Kalam", cursive; font-size: 22px; }
+    .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+    label { display: grid; gap: 3px; font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; min-width: 0; }
+    input, select { font: 15px "Literata", Georgia, serif; padding: 9px 10px; min-height: 44px; border: 2px solid var(--ink); border-radius: 6px; background: #fffefa; color: var(--ink); width: 100%; min-width: 0; }
+    button { font: 600 14px "IBM Plex Mono", monospace; padding: 11px 14px; min-height: 44px; border: 2px solid var(--ink); border-radius: 999px; background: var(--ink); color: #fffefa; cursor: pointer; }
+    button:disabled { opacity: .5; }
+    .status { margin: 10px 0 0; font-size: 15px; }
+    .status.error { color: var(--red); }
+    .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 0 0 12px; }
+    .fact { padding: 10px 12px; border-radius: 6px; background: #f3efe6; }
+    .fact b { display: block; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+    .fact span { font-size: 20px; font-variant-numeric: tabular-nums; }
+    .hint { font-size: 13.5px; opacity: .8; margin: 6px 0 0; line-height: 1.45; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(0,0,0,.1); vertical-align: top; }
+    th { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+    .scroll { overflow-x: auto; }
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Admin <span>which model writes the puzzles</span></h1>
+    <p>Change the OpenRouter model and the daily budget of new puzzles. Changes apply within a minute on every server instance.</p>
+  </header>
+  <main class="app-main">
+    <section class="card" id="loginCard">
+      <h2>Sign in</h2>
+      <form id="loginForm" class="row">
+        <label>Admin password <input id="pw" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Open</button>
+      </form>
+      <p id="loginStatus" class="status"></p>
+    </section>
+
+    <section class="card" id="panel" hidden>
+      <h2>Settings</h2>
+      <div class="facts">
+        <div class="fact"><b>Model now</b><span id="fModel" style="font-size:15px"></span></div>
+        <div class="fact"><b>New puzzles today</b><span id="fMade"></span></div>
+        <div class="fact"><b>Spent today</b><span id="fSpent"></span></div>
+        <div class="fact"><b>Storage</b><span id="fStore" style="font-size:15px"></span></div>
+      </div>
+      <form id="setForm">
+        <div class="row">
+          <label>Model (OpenRouter id) <select id="model"></select></label>
+          <label>Daily cap <input id="cap" type="number" min="0" max="5000" step="1" style="width:120px"></label>
+        </div>
+        <p class="hint" id="price"></p>
+        <div class="row" style="margin-top:10px">
+          <p class="hint" style="margin:0">A puzzle costs roughly 5,000 input and 2,500 output tokens: about 7 cents on Opus 5.5, 3 cents on Sonnet 5.5, under a cent on Haiku 5.5. The cap counts every new puzzle, all visitors together; saved puzzles are free.</p>
+          <button type="submit" id="save">Save</button>
+        </div>
+      </form>
+      <p id="setStatus" class="status"></p>
+    </section>
+
+    <section class="card" id="recentCard" hidden>
+      <h2>Recent puzzles</h2>
+      <div class="scroll"><table><thead><tr><th>When</th><th>Kind</th><th>Paper or topic</th><th>Model</th><th>Cost</th></tr></thead><tbody id="recent"></tbody></table></div>
+      <p class="hint"><a href="history.html" style="color:inherit">The full history, with every word and story</a></p>
+    </section>
+  </main>
+  <footer class="app-footer">
+    <a href="index.html">Back to the game</a>
+  </footer>
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    const API = (window.CONNECTIONS_API_BASE || '').trim().replace(/\/$/, '') || (location.protocol === 'file:' ? 'http://localhost:3000' : '');
+    const $ = id => document.getElementById(id);
+    let password = sessionStorage.getItem('cx_admin') || '';
+    let models = [];
+    const money = n => n == null ? '–' : '$' + Number(n).toFixed(n < 1 ? 3 : 2);
+
+    async function call(bodyExtra) {
+      const res = await fetch(`${API}/api/admin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, action: 'status', ...bodyExtra }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw Object.assign(new Error(data.message || `HTTP ${res.status}`), { status: res.status });
+      return data;
+    }
+
+    function show(d) {
+      $('loginCard').hidden = true; $('panel').hidden = false; $('recentCard').hidden = false;
+      models = d.models || [];
+      $('fModel').textContent = d.model;
+      $('fMade').textContent = d.madeToday == null ? '–' : `${d.madeToday} / ${d.dailyCap}`;
+      $('fSpent').textContent = money(d.spentToday);
+      $('fStore').textContent = d.persistent ? 'Supabase: saving games' : 'Not saving (no tables)';
+      const sel = $('model'); sel.innerHTML = '';
+      const groups = {};
+      for (const m of models) (groups[m.id.split('/')[0]] = groups[m.id.split('/')[0]] || []).push(m);
+      for (const [prov, list] of Object.entries(groups).sort()) {
+        const og = document.createElement('optgroup'); og.label = prov;
+        for (const m of list) og.append(new Option(`${m.id}  ·  $${m.inPerM.toFixed(2)} in / $${m.outPerM.toFixed(2)} out per M`, m.id));
+        sel.append(og);
+      }
+      if (![...sel.options].some(o => o.value === d.model)) sel.append(new Option(d.model + ' (current)', d.model));
+      sel.value = d.model;
+      $('cap').value = d.dailyCap;
+      pricing();
+      $('recent').innerHTML = '';
+      for (const r of d.recent || []) {
+        const tr = document.createElement('tr');
+        for (const v of [new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }), r.mode === 'news' ? 'Paper' : 'Study', r.key, r.model.replace(/^[^/]+\//, ''), r.cost_usd == null ? '–' : '$' + Number(r.cost_usd).toFixed(3)]) {
+          const td = document.createElement('td'); td.textContent = v; tr.append(td);
+        }
+        $('recent').append(tr);
+      }
+      if (!(d.recent || []).length) $('recent').innerHTML = '<tr><td colspan="5">Nothing saved yet.</td></tr>';
+      if (!d.persistent) $('setStatus').textContent = 'Without the Supabase tables, a model change lasts only until the server restarts.';
+    }
+    function pricing() {
+      const m = models.find(x => x.id === $('model').value);
+      $('price').textContent = m ? `About ${money((m.inPerM * 5000 + m.outPerM * 2500) / 1e6)} per puzzle at this model's prices${m.context ? `, ${Math.round(m.context / 1000)}k context` : ''}.` : '';
+    }
+    $('model').addEventListener('change', pricing);
+
+    $('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      password = $('pw').value;
+      $('loginStatus').textContent = 'Checking...'; $('loginStatus').className = 'status';
+      try { const d = await call({}); sessionStorage.setItem('cx_admin', password); show(d); }
+      catch (err) { $('loginStatus').textContent = err.message; $('loginStatus').className = 'status error'; }
+    });
+    $('setForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      $('save').disabled = true; $('setStatus').textContent = 'Saving...'; $('setStatus').className = 'status';
+      try { const d = await call({ action: 'set', model: $('model').value, dailyCap: $('cap').value }); show(d); $('setStatus').textContent = `Saved. Puzzles are now written by ${d.model}.`; }
+      catch (err) { $('setStatus').textContent = err.message; $('setStatus').className = 'status error'; }
+      finally { $('save').disabled = false; }
+    });
+    if (password) call({}).then(show).catch(() => { sessionStorage.removeItem('cx_admin'); password = ''; });
+  })();
+  </script>
+</body>
+</html>

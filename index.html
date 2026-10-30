@@ -3,40 +3,85 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Connections About You</title>
-  <meta name="description" content="A Connections-style word game. Play puzzles an AI wrote about Ben Collier, or hand-made Star Wars, Lord of the Rings and Carnegie Mellon packs, each in its own animated theme.">
+  <title>Connections: today's paper, study cards, and a few galaxies</title>
+  <meta name="description" content="A Connections-style word game written by an AI from today's headlines in the New York Times, Wall Street Journal and nine other papers, or from any topic you want to study. Solve a group to read the story behind it.">
   <meta name="theme-color" content="#22302b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Orbitron:wght@600;800&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="player/player.css">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-mode="news">
   <header class="app-header">
-    <h1>Connections <span>about you, and a few galaxies far away</span></h1>
-    <p>Find four groups of four. Pick a theme: puzzles an AI wrote about me, or hand-made packs for Star Wars, The Lord of the Rings and Carnegie Mellon.</p>
+    <h1>Connections <span>today's paper · study cards · a few galaxies far away</span></h1>
+    <p>Find four groups of four. An AI writes a fresh puzzle from today's headlines in the paper you pick, or from any topic you want to study. Solve a group and it shows you the story, or the flash cards, behind it.</p>
   </header>
 
   <main class="app-main">
-    <section id="genPanel" class="gen-panel" aria-label="Make a puzzle about you" hidden>
-      <form id="genForm" class="gen-form">
-        <label><span>Your name</span><input id="nameInput" type="text" autocomplete="name" maxlength="80" required></label>
-        <label><span>Your town</span><input id="locationInput" type="text" placeholder="City, State" maxlength="160" required></label>
-        <button id="generateBtn" class="gen-btn" type="submit">Write a puzzle about me</button>
+    <nav class="modes" role="tablist" aria-label="What to play">
+      <button role="tab" id="tab-news" aria-controls="newsPanel" aria-selected="true" data-mode="news" type="button"><span class="mode-ico" aria-hidden="true">&#9776;</span>Today's paper</button>
+      <button role="tab" id="tab-study" aria-controls="studyPanel" aria-selected="false" data-mode="study" type="button"><span class="mode-ico" aria-hidden="true">&#9998;</span>Study cards</button>
+      <button role="tab" id="tab-packs" aria-controls="packsPanel" aria-selected="false" data-mode="packs" type="button"><span class="mode-ico" aria-hidden="true">&#10022;</span>Themed packs</button>
+    </nav>
+
+    <section id="newsPanel" class="panel panel-news" role="tabpanel" aria-labelledby="tab-news">
+      <form id="newsForm" class="panel-form">
+        <label><span>Newspaper</span>
+          <select id="paperSelect" aria-describedby="newsHelp"></select>
+        </label>
+        <button id="newsPlay" class="panel-btn" type="submit">Play today's puzzle</button>
+        <button id="newsAnother" class="panel-btn secondary" type="button" hidden>Another from this paper</button>
       </form>
-      <p id="genStatus" class="gen-status" role="status" aria-live="polite"></p>
-      <p id="demoNote" class="gen-note" hidden>These five puzzles were written by GPT-5 about me, after it searched the web for my name and Pittsburgh. This copy has no server, because an AI key cannot live in a public web page. To get one about you, try the <a href="https://connections-about-you.vercel.app">live version</a> or <a href="https://github.com/bcollier/connections_demo#running-it-locally">run the server</a>.</p>
+      <p id="newsStatus" class="panel-status" role="status" aria-live="polite"></p>
+      <p id="newsHelp" class="panel-note">The eleven papers in <a href="https://guides.library.cmu.edu/digital_news/home">Carnegie Mellon's digital news subscriptions</a>. Each group is drawn from one of today's stories; solve it to see the headline and a link that opens the paper's site or app, where you sign in with your subscription.</p>
     </section>
+
+    <section id="studyPanel" class="panel panel-study" role="tabpanel" aria-labelledby="tab-study" hidden>
+      <form id="studyForm" class="panel-form">
+        <label><span>Topic to study</span>
+          <input id="topicInput" type="text" maxlength="80" placeholder="data science, cell biology, the French Revolution…" autocomplete="off" required>
+        </label>
+        <button id="studyPlay" class="panel-btn" type="submit">Deal the cards</button>
+        <button id="studyAnother" class="panel-btn secondary" type="button" hidden>Another on this topic</button>
+      </form>
+      <p class="panel-chips" aria-label="Try a topic">
+        <button type="button" class="chip" data-topic="data science">data science</button>
+        <button type="button" class="chip" data-topic="machine learning">machine learning</button>
+        <button type="button" class="chip" data-topic="cell biology">cell biology</button>
+        <button type="button" class="chip" data-topic="microeconomics">microeconomics</button>
+        <button type="button" class="chip" data-topic="organic chemistry">organic chemistry</button>
+        <button type="button" class="chip" data-topic="US constitutional law">constitutional law</button>
+        <button type="button" class="chip" data-topic="music theory">music theory</button>
+      </p>
+      <p id="studyStatus" class="panel-status" role="status" aria-live="polite"></p>
+      <p class="panel-note">Sixteen terms a student of the topic should know, sorted into four concept families. Each solved group turns over its cards: a one-line definition per term.</p>
+    </section>
+
+    <section id="packsPanel" class="panel panel-packs" role="tabpanel" aria-labelledby="tab-packs" hidden>
+      <p class="panel-note">Hand-made puzzles in their own animated themes: five an AI wrote about me, then Star Wars, The Lord of the Rings and Carnegie Mellon. Pick a theme inside the game.</p>
+      <div id="genPanel" class="gen-panel" aria-label="Make a puzzle about you" hidden>
+        <form id="genForm" class="gen-form">
+          <label><span>Your name</span><input id="nameInput" type="text" autocomplete="name" maxlength="80" required></label>
+          <label><span>Your town</span><input id="locationInput" type="text" placeholder="City, State" maxlength="160" required></label>
+          <button id="generateBtn" class="gen-btn" type="submit">Write a puzzle about me</button>
+        </form>
+        <p id="genStatus" class="gen-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <p id="demoNote" class="demo-note" hidden>This copy has no server, so the newspaper and study-card puzzles are not available here; the themed packs still play. For the live game go to <a href="https://connections-about-you.vercel.app">connections-about-you.vercel.app</a>.</p>
 
     <div id="game"></div>
   </main>
 
   <footer class="app-footer">
+    <a href="history.html">Every saved game</a>
     <a href="https://github.com/bcollier/connections_demo">Source on GitHub</a>
-    <a href="viewer.html">All saved AI puzzles</a>
+    <a href="viewer.html">The About Ben puzzles</a>
     <a href="https://ben.collier.phd/connections/">On ben.collier.phd</a>
-    <span>Inspired by the New York Times game Connections. Not affiliated with the Times.</span>
+    <a href="admin.html" class="muted">Admin</a>
+    <span id="modelNote">Inspired by the New York Times game Connections. Not affiliated with the Times or any newspaper; headlines belong to their publishers.</span>
   </footer>
 
   <script src="config.js"></script>

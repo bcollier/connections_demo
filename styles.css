@@ -1,9 +1,14 @@
-/* The page around the game. The game's own look lives in player/player.css. */
+/* The page around the game: the mode tabs and their panels. The game's own
+   look lives in player/player.css. */
 :root {
   --bench: #22302b;
   --bench-ink: #efe8d6;
   --sticky: #ffe17a;
   --ink: #1d2633;
+  --pen: #2447a6;
+  --red: #b8352a;
+  --news: #f3efe6;
+  --card: #fffefa;
 }
 * { box-sizing: border-box; }
 body {
@@ -17,31 +22,89 @@ body {
 body[data-theme="starwars"] { background: #010207; }
 body[data-theme="lotr"] { background: #2b2116; }
 body[data-theme="cmu"] { background: #1b1b1b; }
+body[data-theme="news"] { background: #2a2622; }
 
 .app-header, .app-main, .app-footer { max-width: 760px; margin: 0 auto; padding: 0 16px; }
 .app-header { padding-top: 26px; padding-bottom: 14px; }
 .app-header h1 { margin: 0; font-family: "Kalam", cursive; font-weight: 700; font-size: clamp(30px, 6vw, 42px); line-height: 1.05; }
 .app-header h1 span { display: block; font-family: "IBM Plex Mono", monospace; font-weight: 400; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .75; margin-top: 6px; }
-.app-header p { margin: 10px 0 0; max-width: 40em; font-size: 16px; line-height: 1.5; opacity: .9; }
+.app-header p { margin: 10px 0 0; max-width: 42em; font-size: 16px; line-height: 1.5; opacity: .9; }
+:focus-visible { outline: 3px solid #7fb2ff; outline-offset: 3px; }
 
-.gen-panel { margin: 0 0 14px; padding: 14px 16px; background: var(--sticky); color: var(--ink); border-radius: 3px; transform: rotate(-.4deg); box-shadow: 0 14px 22px -12px rgba(0,0,0,.6); }
+/* ----- mode tabs: folder tabs standing on the panel ----- */
+.modes { display: flex; gap: 6px; align-items: flex-end; padding: 0 8px; }
+.modes button {
+  font: 600 13.5px "IBM Plex Mono", monospace; letter-spacing: .02em;
+  padding: 9px 14px 11px; border: 0; border-radius: 8px 8px 0 0; cursor: pointer;
+  color: var(--ink); background: rgba(255,255,255,.55);
+  display: inline-flex; align-items: center; gap: 7px;
+  transform: translateY(2px); transition: background .2s, transform .2s;
+}
+.modes button:hover { background: rgba(255,255,255,.8); }
+.modes button[aria-selected="true"] { background: var(--card); transform: none; box-shadow: 0 -2px 0 rgba(0,0,0,.08) inset; }
+.mode-ico { font-size: 15px; opacity: .8; }
+#tab-news[aria-selected="true"] { background: var(--news); }
+#tab-study[aria-selected="true"] { background: var(--sticky); }
+
+/* ----- panels ----- */
+.panel { margin: 0 0 14px; padding: 14px 16px 12px; border-radius: 0 6px 6px 6px; color: var(--ink); background: var(--card); box-shadow: 0 14px 22px -12px rgba(0,0,0,.6); }
+.panel-news {
+  background: var(--news);
+  background-image: radial-gradient(rgba(29,29,27,.04) 1px, transparent 1.2px);
+  background-size: 7px 7px;
+  border-top: 3px double #1d1d1b;
+}
+.panel-study {
+  background: var(--sticky);
+  background-image: linear-gradient(rgba(29,38,51,.12) 1px, transparent 1px);
+  background-size: 100% 28px;
+  background-position: 0 14px;
+}
+.panel-packs { background: var(--card); }
+.panel-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: end; }
+.panel-form label { display: grid; gap: 3px; font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; min-width: 0; }
+.panel-form select, .panel-form input {
+  font: 16px "Literata", Georgia, serif; padding: 9px 10px; min-height: 44px; min-width: 0; width: 100%;
+  border: 2px solid var(--ink); border-radius: 6px; background: #fffefa; color: var(--ink);
+}
+.panel-news select { font-family: "Playfair Display", "Times New Roman", serif; font-weight: 700; border-radius: 2px; }
+.panel-btn { font: 600 14px "IBM Plex Mono", monospace; padding: 11px 14px; min-height: 44px; border: 2px solid var(--ink); border-radius: 999px; background: var(--ink); color: #fffefa; cursor: pointer; white-space: nowrap; }
+.panel-btn.secondary { background: transparent; color: var(--ink); }
+.panel-btn:disabled { opacity: .55; cursor: progress; }
+.panel-news .panel-btn { border-radius: 2px; }
+.panel-status { margin: 10px 0 0; font-size: 15px; line-height: 1.45; }
+.panel-status:empty { display: none; }
+.panel-status.busy::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; border: 2px solid var(--ink); border-right-color: transparent; animation: spin .8s linear infinite; vertical-align: -1px; }
+.panel-status.error { color: var(--red); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.panel-note { margin: 10px 0 0; font-size: 14px; line-height: 1.45; opacity: .85; }
+.panel a { color: var(--ink); text-decoration-thickness: 2px; }
+.panel-chips { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 13px "Kalam", cursive; padding: 4px 10px; border: 1.5px solid var(--ink); border-radius: 999px; background: #fffefa; color: var(--ink); cursor: pointer; }
+.chip:hover { background: var(--ink); color: #fffefa; }
+
+.gen-panel { margin: 12px 0 0; padding: 12px 14px; background: var(--sticky); border-radius: 3px; transform: rotate(-.4deg); }
 .gen-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
 .gen-form label { display: grid; gap: 3px; font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 .gen-form input { font: 16px "Literata", Georgia, serif; padding: 9px 10px; border: 2px solid var(--ink); border-radius: 6px; background: #fffefa; color: var(--ink); min-width: 0; }
 .gen-btn { font: 600 14px "IBM Plex Mono", monospace; padding: 11px 14px; min-height: 44px; border: 2px solid var(--ink); border-radius: 999px; background: var(--ink); color: #fffefa; cursor: pointer; }
 .gen-btn:disabled { opacity: .55; cursor: progress; }
 .gen-status:empty { display: none; }
-.gen-status, .gen-note { margin: 8px 0 0; font-size: 15px; line-height: 1.45; }
-.gen-note { margin: 0; }
-.gen-panel a { color: var(--ink); text-decoration-thickness: 2px; }
-:focus-visible { outline: 3px solid #7fb2ff; outline-offset: 3px; }
+.gen-status { margin: 8px 0 0; font-size: 15px; line-height: 1.45; }
+
+.demo-note { margin: 0 0 14px; padding: 12px 14px; background: rgba(255,255,255,.1); border-radius: 6px; font-size: 14.5px; line-height: 1.45; }
+.demo-note a { color: var(--bench-ink); }
 
 #game { border-radius: 6px; box-shadow: 0 30px 60px -24px rgba(0,0,0,.7); }
 
 .app-footer { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-top: 22px; padding-bottom: 36px; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
 .app-footer a { color: var(--bench-ink); }
+.app-footer a.muted { opacity: .6; }
 .app-footer span { flex: 1 0 100%; opacity: .7; }
 
-@media (max-width: 560px) {
-  .gen-form { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .panel-form, .gen-form { grid-template-columns: 1fr; }
+  .panel-form .panel-btn { width: 100%; }
+  .modes { gap: 4px; padding: 0 4px; }
+  .modes button { padding: 8px 10px 10px; font-size: 12.5px; }
 }

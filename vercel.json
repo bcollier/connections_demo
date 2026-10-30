@@ -8,6 +8,10 @@
     "api/generate.js": {
       "maxDuration": 300,
       "includeFiles": "{nyt_connections_groups_history_sept2025.csv,data/history.jsonl}"
+    },
+    "api/puzzle.js": {
+      "maxDuration": 300,
+      "includeFiles": "nyt_connections_groups_history_sept2025.csv"
     }
   }
 }

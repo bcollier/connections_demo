@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { OutputSchema, normalizeWordForDisplay, canonicalizeWord, normalizeColor } from './validate.js';
+import { extractJsonCandidate } from './parse.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Which model writes the puzzle. With JETSTREAM_API_KEY set, an open model on
@@ -144,24 +145,6 @@ function splitCsvLine(line) {
   }
   result.push(curr.trim().replace(/^"|"$/g, ''));
   return result;
-}
-
-function extractJsonCandidate(text) {
-  // Try as-is
-  try { return JSON.parse(text); } catch {}
-  // Try fenced code block ```json ... ```
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenced && fenced[1]) {
-    try { return JSON.parse(fenced[1].trim()); } catch {}
-  }
-  // Try slice from first { to last }
-  const first = text.indexOf('{');
-  const last = text.lastIndexOf('}');
-  if (first !== -1 && last !== -1 && last > first) {
-    const slice = text.slice(first, last + 1);
-    try { return JSON.parse(slice); } catch {}
-  }
-  throw new Error('Unable to parse JSON from model output');
 }
 
 function formatDuration(ms) {

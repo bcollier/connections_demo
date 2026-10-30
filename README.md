@@ -1,32 +1,36 @@
-# Connections About You
+# Connections: today's paper, study cards, and a few galaxies
 
-A word game in the style of the New York Times' Connections, with two kinds of puzzles: ones an AI writes about you from a web search, and hand-made packs for Star Wars, The Lord of the Rings and Carnegie Mellon. Each pack plays in its own animated theme.
+A word game in the style of the New York Times' Connections. An AI writes a fresh puzzle from today's headlines in the newspaper you pick (any of the eleven in Carnegie Mellon's digital news subscriptions), or from any topic you want to study. Solve a group and it shows you the story that inspired it, with a link to read it, or the flash-card definitions behind it. Hand-made packs for Star Wars, The Lord of the Rings and Carnegie Mellon still play in their own animated themes, and every puzzle the AI writes is kept, words, groups and stories, in a history you can replay.
 
 **Play:**
 
-- https://bcollier.github.io/connections_demo/ : every pack, no server (the About Ben pack is five puzzles the AI wrote about me).
-- https://ben.collier.phd/connections/ : the same game inside my site.
-- https://connections-about-you.vercel.app : the live version, where the AI writes a new puzzle about whoever types their name. It only does that while a model key is set in the Vercel project; without one it says so and plays a saved puzzle.
+- https://connections-about-you.vercel.app : the live game. Today's paper, study cards, the packs, the history and the admin page.
+- https://bcollier.github.io/connections_demo/ : the packs only, with no server (a static page cannot hold a model key).
+- https://ben.collier.phd/connections/ : the packs inside my site.
 
-Deep links pick a theme and puzzle: `?theme=starwars&puzzle=2` (themes are `ben`, `starwars`, `lotr`, `cmu`).
+Deep links: `?mode=news&paper=wsj`, `?mode=study&topic=cell%20biology`, `?game=<id>` (a saved game from the history), and for the packs `?theme=starwars&puzzle=2` (themes are `ben`, `starwars`, `lotr`, `cmu`).
 
-| About Ben | Star Wars | The Lord of the Rings | Carnegie Mellon |
+| Today's paper | A group solved: the story behind it | Study cards | On a phone |
 | --- | --- | --- | --- |
-| <img src="docs/gifs/ben.gif" width="200" alt="Notebook theme: index-card tiles on graph paper, a group solved in yellow highlighter"> | <img src="docs/gifs/starwars.gif" width="200" alt="Space theme: tiles over a starfield that streaks into hyperspace when a group is solved"> | <img src="docs/gifs/lotr.gif" width="200" alt="Parchment theme: an inked map border, rune-like flourishes, a glowing ring over a solved group"> | <img src="docs/gifs/cmu.gif" width="200" alt="Tartan theme: a white card on a red plaid, a bagpipe marches across on the win"> |
+| <img src="docs/screenshots/news-desktop-start.jpg" width="200" alt="Newsprint theme: a blackletter dateline for The New York Times, a bold serif puzzle title, sixteen boxed headline-style tiles"> | <img src="docs/screenshots/news-desktop-solved.jpg" width="200" alt="The X-Men Mutants group solved; under the band, a clipping with the headline Patrick Stewart dies at 86, its abstract, and a Read the full story link"> | <img src="docs/screenshots/study-desktop-solved.jpg" width="200" alt="Notebook theme: a data science puzzle with the ensembles group solved and its four definitions shown as cards"> | <img src="docs/screenshots/news-phone.jpg" width="200" alt="The newspaper puzzle at phone width, one column, no sideways scroll"> |
 
 ## Contents
 
 - [What it is and why](#what-it-is-and-why)
 - [How to play](#how-to-play)
+- [The three modes](#the-three-modes)
+- [How a newspaper puzzle is made](#how-a-newspaper-puzzle-is-made)
+- [How a study-card puzzle is made](#how-a-study-card-puzzle-is-made)
+- [The history: every game is kept](#the-history-every-game-is-kept)
+- [The admin page: which model writes](#the-admin-page-which-model-writes)
 - [The themes](#the-themes)
-- [How a live puzzle is made](#how-a-live-puzzle-is-made)
 - [Architecture](#architecture)
 - [Data formats](#data-formats)
 - [Themed packs, and how to add one](#themed-packs-and-how-to-add-one)
 - [Animation and accessibility](#animation-and-accessibility)
 - [Running it locally](#running-it-locally)
 - [Deploying](#deploying)
-- [Costs](#costs)
+- [Costs and brakes](#costs-and-brakes)
 - [Privacy: what is and isn't published](#privacy-what-is-and-isnt-published)
 - [Testing](#testing)
 - [Limitations](#limitations)
@@ -38,9 +42,7 @@ Deep links pick a theme and puzzle: `?theme=starwars&puzzle=2` (themes are `ben`
 
 Connections gives you sixteen words and asks you to sort them into four groups of four. The groups get harder from yellow to purple, and the fun is in the red herrings: words that look like they belong to one group but are needed in another.
 
-I built this for a class on coding with AI, to answer a question my students kept asking: can a language model be the part of a game that makes the content, and not just the part that chats? A Connections puzzle is a good test. It is small (sixteen words), it has hard rules a program can check (four groups, four words each, no repeats), and it has soft rules only a person can judge (is it fair, is it fun, is the purple group clever or just obscure). So the AI writes puzzles about the player, and the code checks everything it can.
-
-The themed packs came later, for the opposite reason. I wrote them by hand to see how much work a good puzzle takes, and to give the game something to play that doesn't need a server or a name.
+I built the first version for a class on coding with AI, to answer a question my students kept asking: can a language model be the part of a game that makes the content, and not just the part that chats? This version pushes on that in two directions. **Today's paper** makes the content *about something real and current*: each of the four groups is drawn from one of the day's stories, so solving the puzzle is a way of reading the paper, and the reveal sends you to the story. **Study cards** makes the content *useful*: sixteen terms from a subject, sorted into concept families, with a definition per term when you solve a group, so the game is a quiz you did not have to write. Both are written on demand by a model (Claude Opus 5.5 to begin with; an admin can change it), checked by code, and saved, so the same puzzle is free for everyone else that day.
 
 ## How to play
 
@@ -52,7 +54,87 @@ The themed packs came later, for the opposite reason. I wrote them by hand to se
 
 Keyboard: arrow keys move between words, Space or Enter picks one, Ctrl+Enter (Cmd+Enter on a Mac) submits, Esc clears the picks.
 
+In the live modes, solving a group also opens a **reveal** under the band: for a newspaper puzzle, the headline, its abstract, how the four words connect to it, and a link to read the full story; for study cards, why the four terms belong together and a one-line definition of each. If you run out of mistakes, the unsolved groups are revealed the same way, so you still get the stories.
+
+## The three modes
+
+| Mode | What you pick | What the AI does | What a solved group reveals |
+| --- | --- | --- | --- |
+| **Today's paper** | A newspaper from the eleven in [CMU's digital news subscriptions](https://guides.library.cmu.edu/digital_news/home): The New York Times, The Wall Street Journal, The Washington Post, Financial Times, Bloomberg, The Atlantic, Business Insider, The Information, The New Yorker, Pittsburgh Business Times, Pittsburgh Post-Gazette. | Reads today's headlines and summaries, picks four stories as different as it can, and writes one group from each, with red herrings across groups. | The story: headline, abstract, how the words connect, and a link that opens the paper's site or app (where you sign in with your own subscription). |
+| **Study cards** | A topic: "data science", "cell biology", "the French Revolution". | Chooses sixteen terms a student should know and sorts them into four concept families, one of them a trap for beginners. | Why the four belong together, and a definition of each term. |
+| **Themed packs** | A theme inside the game. | Nothing: these are hand-made (the About Ben pack was written by GPT-5 about me and saved). | The group's explanation at the end, as before. |
+
+**Another puzzle.** The first time anyone picks a paper on a given day, the AI writes that day's first puzzle for it and saves it. Everyone after that plays the saved one instantly. "Another from this paper" gives you a saved puzzle you have not played in this browser session, and only writes a new one when none is left, built on different stories (the prompt is told what the day's earlier puzzles used). Study topics work the same way, keyed by the topic.
+
+## How a newspaper puzzle is made
+
+`server/news.js` fetches the stories, `server/puzzles.js` briefs the model and checks the answer, and `server/handlers.js` decides whether to write or to serve a saved puzzle. The same code runs in the local Express server and the Vercel functions.
+
+```mermaid
+sequenceDiagram
+  participant P as Player's browser
+  participant S as Server (Express or Vercel function)
+  participant D as Supabase (cx_puzzles, cx_settings)
+  participant N as The paper (API, RSS, or Google News)
+  participant M as Model via OpenRouter
+  P->>S: POST /api/puzzle {mode: news, paper: nyt, seen: [ids]}
+  S->>D: saved puzzles for nyt + today?
+  alt one the player has not seen
+    D-->>S: puzzle
+    S-->>P: {cached: true, puzzle}
+  else none left
+    S->>S: brakes: origin, daily cap, per-visitor rate, in-flight
+    S->>N: today's headlines (fresh, deduplicated, mixed by section)
+    N-->>S: up to 45 numbered stories
+    S->>D: which model is set?
+    S->>M: brief + numbered stories + today's earlier groups to avoid
+    M-->>S: JSON: 4 groups, each with a story_index
+    S->>S: schema, 16 distinct words, no shared roots, 4 different stories
+    alt a check fails
+      S->>M: same brief + "your last answer was rejected: ..." (up to 2 retries)
+    end
+    S->>S: attach each story's title, link, abstract by its number
+    S->>D: save {mode, key, model, cost, puzzle}
+    S-->>P: {cached: false, puzzle}
+  end
+  P->>P: play; each solved group reveals its story
+```
+
+**Where the headlines come from.** Three sources, tried in order until there are at least ten fresh stories:
+
+1. *A publisher API with a key.* The New York Times [Top Stories API](https://developer.nytimes.com/) (`NYT_API_KEY`), which returns a real abstract per story across the home page and several sections. Optional: without a key the Times' RSS feeds are used, and their descriptions are the same abstracts.
+2. *The paper's own RSS feeds* (`feeds` in `PAPERS`): headline, one-line summary, link, date, section. Items older than the paper's `maxAgeHours` (36 hours for dailies, up to five days for weeklies like The New Yorker) are dropped, so a stale feed cannot pass as today's news.
+3. *Google News search for the paper's site* (`site:wsj.com when:2d`), which gives current headlines whose links redirect to the paper. This is the only source for The Wall Street Journal (its public RSS feeds stopped updating in 2025) and Pittsburgh Business Times (its feeds sit behind a bot wall), and the fallback for The Washington Post when its feed servers are down.
+
+The parser is sixty lines of regular expressions over RSS and Atom, with no dependency; feeds are simple enough. Section names come from the feed (`Technology.xml`) or the article path (`/2026/10/29/arts/`), never from `<category>` tags, which the Times uses for people's names.
+
+**The brief.** A system line sets the editor's standards (one plain group, one wordplay group, red herrings required, labels are categories not headlines). The user message numbers the stories and gives seven rules: four stories as different as possible, words that are *in or evoked by* the story but solvable from general knowledge, category-style labels, at least three red herrings, sixteen distinct words with no shared roots, an explanation per group that gives away no more than the headline does, and nothing naming victims. Then ten real NYT groups as format examples, the color rubric, and the exact JSON to return, with a `story_index` per group.
+
+**Taking the link back by number.** The model never writes a URL. It names a story by its number, and the server attaches that story's title, link, abstract, section and date. A group that points outside the list, or two groups on the same story, is a rejection and a retry. So every "Read the full story" link is one the server fetched from the paper that day.
+
+**Checks and retries.** JSON out of the reply (`server/parse.js`), the zod schema (`server/validate.js`), colors normalized and each used once, then the rules that matter: sixteen different words, no two sharing a root (RUN and RUNNING), no word repeated inside a label, four different labels, an explanation per group. A failure goes back to the model as "your last answer was rejected: ..." with a higher temperature, up to two retries. Provider errors (a 429, an empty credit balance) are not retried; they come back to the page as a plain message.
+
+## How a study-card puzzle is made
+
+The same pipeline with a different brief and no story fetch. The prompt asks for sixteen real terms from the topic as single tokens, in four concept families (kinds of something, steps of a process, things measured in the same unit, terms named after people, words with a second everyday meaning), at least one of which is a trap a beginner would misfile; an explanation per group that teaches what separates the four from the near misses; and a definition per word in at most fifteen words, in the words' order. "Accuracy over cleverness" is a rule in the prompt, and the game's footer says to check anything you will be graded on. The check adds one rule: four definitions per group, or the answer is rejected.
+
+A puzzle on *data science* came back as: metrics from a confusion matrix (PRECISION, RECALL, SPECIFICITY, F1 SCORE), ensembles (BAGGING, BOOSTING, STACKING, BLENDING), regularization (LASSO, RIDGE, DROPOUT, EARLY STOPPING), and people behind the terms (GINI, BAYES, PEARSON, MARKOV), with GINI as the trap: it looks like a metric.
+
+## The history: every game is kept
+
+Every puzzle the AI writes is saved as a row in `cx_puzzles` (Supabase): the mode, the key (`nyt:2026-10-29` or the topic), the model, what the call cost, and the whole puzzle as JSON, which includes all sixteen words, the four labels and colors, the explanation of each group, and for newspaper puzzles each group's story (headline, link, abstract, section, date) and for study cards the definitions. Nothing about the player is stored: no name, no IP address, no guesses.
+
+[`history.html`](history.html) lists them newest first with a filter by kind and by paper or topic, shows every group with its words and story link, and has a **Play this game** button that opens `index.html?game=<id>`. `GET /api/history` serves the same list as JSON (`?mode=news&key=nyt:2026-10-29&limit=30&offset=0`, or `?id=` for one game).
+
+Locally, without Supabase, the same history lives in `data/cx_store.local.json` (git-ignored), so a page reload does not pay for a new puzzle. On Vercel there is no disk, so without the tables nothing is kept and the history page says so.
+
+## The admin page: which model writes
+
+[`admin.html`](admin.html) asks for the `ADMIN_PASSWORD` set on the server (compared in constant time, with a delay on a wrong guess), then shows the model in use, how many new puzzles were written today against the daily cap, what they cost, and the recent puzzles. The model is a dropdown of OpenRouter's models from Anthropic, OpenAI, Google, xAI, Meta, Mistral, DeepSeek and Qwen, with their prices per million tokens and an estimate per puzzle. Saving writes `cx_settings` and takes effect on every server instance within a minute. The default is `anthropic/claude-opus-5.5` (`DEFAULT_MODEL`), and the daily cap defaults to 150 (`DAILY_CAP`).
+
 ## The themes
+
+The two live modes have skins of their own: **Newsprint** for today's paper (an off-white sheet with a hairline column grid, a blackletter dateline, a bold serif masthead, groups as boxed headlines and each story as a clipping with a drop cap), and the notebook skin from About Ben for study cards (index-card tiles on graph paper, with the definitions as a stack of cards under the band). Neither uses a newspaper's logo or typeface; "The Daily Connections" look is this game's own.
 
 Each theme is a skin over the same game: the rules, controls and layout don't change. Everything is drawn with CSS, inline SVG and canvas. There are no logos, film stills, official fonts or trademarked artwork; the themes evoke their worlds with original shapes and colors.
 
@@ -76,125 +158,96 @@ Sound is off by default everywhere. Only the Carnegie Mellon theme has any: a **
 
 The hand-made puzzles follow the NYT pattern: a plain yellow group, a purple group built on wordplay, and at least one red herring that crosses groups (six tiles look like droids, but two of them are also bounty hunters, and only four bounty hunters are on the board). The facts were checked against fan wikis (Wookieepedia, Tolkien Gateway) and Carnegie Mellon's own pages, and nothing spoils more than the films' and books' well-known plots.
 
-## How a live puzzle is made
-
-`server/generator.js` builds one prompt, calls the model, and checks the answer. The same code runs in the local Express server and the Vercel function.
-
-```mermaid
-sequenceDiagram
-  participant P as Player's browser
-  participant S as Server (Express or Vercel)
-  participant W as Web search (Tavily or OpenAI tool)
-  participant M as Model (gpt-oss-120b or GPT-5)
-  P->>S: POST /api/generate {name, town}
-  S->>S: limits: origin, per-visitor rate, in-flight cap
-  S->>W: three searches (the player, their interests, their town)
-  W-->>S: numbered sources
-  S->>M: prompt = rules + example NYT groups + sources + last 20 puzzles' themes
-  M-->>S: JSON text
-  S->>S: parse, schema check, 16 unique words
-  alt a check fails
-    S->>M: same prompt + "your last answer broke the rules" (up to 2 retries)
-  end
-  S->>M: (only if reasons are missing) a short second call for per-group explanations
-  S-->>P: puzzle JSON
-  P->>P: play it; on any error, play a saved puzzle instead
-```
-
-**The prompt.** It reads like a brief to a puzzle editor, in five parts:
-
-1. *Tone.* A party game, playful and family friendly. It may guess at hobbies and tastes, as long as the guesses are friendly and not sensitive.
-2. *The rules that keep it a game, not a resume.* At least two groups about fun things (food, games, music, nostalgia), at most one about work, at most one about the place. Sixteen different words, all single game tokens. Public information only.
-3. *Examples.* Twelve real NYT Connections groups from [`nyt_connections_groups_history_sept2025.csv`](nyt_connections_groups_history_sept2025.csv), to show the format and how hard each color should be.
-4. *The color rubric.* Yellow straightforward, green specific, blue lateral, purple wordplay or puns.
-5. *The output contract.* A JSON shape with a label, four words, a reason and a color per group, a paragraph on why the puzzle suits the player, and three to six links.
-
-**Web search.** With OpenAI, the model uses its own `web_search` tool. The free route, gpt-oss-120b on Jetstream2, can't search, so the server runs three [Tavily](https://tavily.com/) searches first and pastes the results in as a numbered source list, with an instruction to take facts and links only from that list. If nothing turns up, the prompt says so and asks for a puzzle built from the town and friendly guesses, with no links.
-
-**Validation and retries.** The model's text goes through `extractJsonCandidate` (plain JSON, a fenced block, or the first `{` to the last `}`), then the zod schema in `server/validate.js` (four groups, four words each, labels up to 40 characters, words up to 20). Words are normalized for display (upper case, letters, digits, spaces, hyphens, apostrophes), colors are mapped to the four names, and then the check that matters most: sixteen *unique* words, compared with punctuation stripped, so `R2-D2` and `R2 D2` count as the same word. Any failure triggers a retry with a note about what went wrong, up to two retries. If the groups come back without reasons, a second, cheaper call writes them.
-
-**The last-20 memory.** Left alone, the model reaches for the same themes over and over (pierogies, the Steelers, Python libraries). So the labels of the last twenty puzzles go back into the prompt with a request not to repeat them. Locally they come from `data/history.jsonl`. On Vercel, where nothing is written to disk, the memory starts from the saved Ben puzzles and grows in memory until the instance restarts.
-
-**Fallbacks.** Every failure path ends in a playable puzzle: the local server returns a fixed puzzle, the Vercel function returns an error with a friendly message, and the page then plays one of the saved About Ben puzzles and shows that message.
-
 ## Architecture
 
 ```mermaid
 flowchart LR
   subgraph Browser
-    I[index.html + script.js<br/>page shell, theme picker, the live form]
-    PL[player/player.js + player.css<br/>game, themes, animation]
-    PK[packs/packs.js<br/>all packs as one script]
+    I[index.html + script.js<br/>mode tabs, paper menu, topic form]
+    PL[player/player.js + player.css<br/>game, themes, the reveal]
+    PK[packs/packs.js]
+    H[history.html]
+    A[admin.html]
     I --> PL
     PK --> PL
   end
-  subgraph Repo
-    J[packs/*.json] -->|scripts/build-packs.mjs<br/>validate + bundle| PK
+  subgraph Server["Server: api/*.js on Vercel, or server/index.js locally"]
+    HD[server/handlers.js<br/>puzzle, history, admin, papers, ping]
+    NW[server/news.js<br/>11 papers: API, RSS, Google News]
+    PZ[server/puzzles.js<br/>briefs, checks, retries]
+    ST[server/store.js<br/>Supabase REST or a local file]
+    SE[server/settings.js<br/>model, daily cap]
+    LL[server/llm.js<br/>OpenRouter]
+    GD[server/guard.js<br/>origin, rate, in-flight]
     V[server/validate.js]
-    V --> J
+    HD --> NW
+    HD --> PZ
+    HD --> ST
+    HD --> SE
+    HD --> GD
+    PZ --> LL
+    PZ --> V
+    SE --> ST
   end
-  subgraph Servers
-    E[server/index.js<br/>local Express :3000]
-    F[api/generate.js<br/>Vercel function]
-    G[server/generator.js<br/>prompt, model call, retries]
-    E --> G
-    F --> G
-    G --> V
-  end
-  I -->|POST /api/generate| E
-  I -->|POST /api/generate| F
-  G --> T[(Tavily search)]
-  G --> X[(Jetstream2 gpt-oss-120b<br/>or OpenAI GPT-5)]
-  subgraph Site[ben.collier.phd]
-    C[connections/index.html<br/>site header, sticky-note theme picker]
-    CP[js/connections/ copy of player + packs]
-    C --> CP
-  end
-  PL -. scripts/sync_connections.sh .-> CP
+  I -->|POST /api/puzzle| HD
+  H -->|GET /api/history| HD
+  A -->|POST /api/admin| HD
+  NW --> P1[(NYT API / RSS feeds / Google News)]
+  LL --> M[(OpenRouter: Claude Opus 5.5 by default)]
+  ST --> DB[(Supabase: cx_puzzles, cx_settings)]
 ```
 
-Three places run the same player:
+The handlers are written once as `(req, res)` functions; `api/puzzle.js` and the others are one-line Vercel wrappers, and `server/index.js` mounts the same functions on Express and serves the folder, so `http://localhost:3000` is the whole app. The older "about you" generator (`server/generator.js`, `api/generate.js`) is still there and still works with its own keys; its form appears under the About Ben theme only when the server has one.
 
-| Where | Puzzles | Server |
+Three places run the player:
+
+| Where | Modes | Server |
 | --- | --- | --- |
-| GitHub Pages (`bcollier.github.io/connections_demo`) | All four packs | None. The About Ben form is replaced by a note. |
-| Vercel (`connections-about-you.vercel.app`) | All four packs, plus a new puzzle about you | `api/generate.js` |
-| ben.collier.phd/connections/ | All four packs | None |
+| Vercel (`connections-about-you.vercel.app`) | Today's paper, study cards, packs, history, admin | `api/*.js` |
+| GitHub Pages (`bcollier.github.io/connections_demo`) | Packs only, with a note pointing to the live game | None |
+| ben.collier.phd/connections/ | Packs only | None |
 
-The site keeps a copy of `player/player.js`, `player/player.css` and `packs/packs.js` that its `scripts/sync_connections.sh` pulls from this repo, so there is one source of truth (here) and the site is still plain static files in its own style. I chose a synced copy over an iframe because the game then sits in the page itself: it sizes to its content with no scroll-inside-a-scroll, it uses the site's fonts, keyboard focus moves naturally from the page into the game, and the site keeps working if this repo's Pages site is down.
+The site keeps a copy of `player/player.js`, `player/player.css` and `packs/packs.js` that its `scripts/sync_connections.sh` pulls from this repo, so there is one source of truth (here) and the site is still plain static files in its own style.
 
 ## Data formats
 
 ### A puzzle
 
-The same shape comes back from the live generator and sits in every pack. Fields marked *pack* are required only in hand-curated packs.
+The same shape comes back from the live writers and sits in every pack. Fields marked *pack* are required only in hand-curated packs; fields marked *news* or *study* appear only in those puzzles.
 
 ```jsonc
 {
-  "id": "sw-1",                       // pack: unique across all packs
-  "title": "A Galaxy of Words",       // pack
-  "intro": "The grid is in turmoil...", // optional; the Star Wars crawl uses it
-  "explanation": "Six tiles look like droid designations, but...", // why the traps work, shown at the end
-  "categories": [                     // exactly 4
+  "id": "sw-1",                        // pack: unique across all packs
+  "title": "Mutants, Marathons and the Stone Age", // pack; the live writers supply one too
+  "intro": "...",                      // optional; the Star Wars crawl uses it
+  "explanation": "ICE tempts solvers toward the X-Men...", // the puzzle's design, shown at the end
+  "categories": [                      // exactly 4
     {
-      "label": "DROIDS",              // 1 to 40 characters
-      "words": ["R2-D2", "C-3PO", "BB-8", "K-2SO"], // exactly 4, each 1 to 20 characters
-      "explanation": "The astromech, the protocol droid...", // up to 240 characters; pack: required
-      "color": "Yellow"               // Yellow | Green | Blue | Purple; pack: each exactly once
+      "label": "___ AGE",              // 1 to 40 characters
+      "words": ["STONE", "ICE", "BRONZE", "SPACE"], // exactly 4, each 1 to 20 characters
+      "explanation": "Each completes a named era...", // up to 400 characters; pack: required
+      "color": "Purple",               // Yellow | Green | Blue | Purple, each once
+      "story": {                       // news: attached by the server from the day's list
+        "title": "Three Stone Age Caves Reveal Continual Cannibalism",
+        "url": "https://www.nytimes.com/2026/10/29/science/...",
+        "summary": "...", "section": "Science", "published": "2026-10-29T...Z"
+      },
+      "definitions": ["...", "...", "...", "..."] // study: one per word, in order
     }
   ],
-  "recommendations": [                // optional, up to 6; live puzzles only
-    { "title": "...", "url": "https://...", "type": "article" }
-  ]
+  "source": { "id": "nyt", "name": "The New York Times", "short": "NYT", "home": "https://www.nytimes.com/", "date": "2026-10-29", "feed": "The New York Times's RSS feeds" }, // news; study: { id: "study", name: topic }
+  "generated": { "model": "anthropic/claude-opus-5.5", "ts": "...", "mode": "news" },
+  "recommendations": [ { "title": "...", "url": "https://...", "type": "article" } ] // the older about-you puzzles only
 }
 ```
 
-Rules the validator enforces (`server/validate.js`, `puzzleProblems`):
+Rules the validator enforces (`server/validate.js`, `puzzleProblems`): four groups of exactly four words; sixteen different words after stripping everything but letters and digits; four different labels; in strict mode (packs) all four colors once each, an explanation for every group, and words in display form. The live writers add: no two words sharing a root, no word inside a label, four different stories (news), four definitions per group (study).
 
-- four groups of exactly four words;
-- sixteen different words after stripping everything but letters and digits;
-- four different labels;
-- in strict mode (packs): all four colors once each, an explanation for every group, and words already in display form (upper case).
+### A saved game (`cx_puzzles`)
+
+```jsonc
+{ "id": "uuid", "mode": "news", "key": "nyt:2026-10-29", "model": "anthropic/claude-opus-5.5", "cost_usd": 0.0697, "puzzle": { /* as above */ }, "created_at": "..." }
+```
 
 ### A pack
 
@@ -209,18 +262,16 @@ Rules the validator enforces (`server/validate.js`, `puzzleProblems`):
 }
 ```
 
-The About Ben puzzles also carry `generated: { model, ts, player, location }`, saying which model wrote them and when.
-
 ## Themed packs, and how to add one
 
 The packs are plain JSON in `packs/`. `scripts/build-packs.mjs` validates all of them and writes `packs/packs.js`, which the pages load with a `<script>` tag rather than `fetch`, so the game also works when you open `index.html` straight from disk.
 
 To add a puzzle to an existing pack: add it to the pack's `puzzles` array, run `npm run packs`, and play it.
 
-To add a pack with an existing skin, set its `theme` to one of the four skins. To add a new skin:
+To add a pack with an existing skin, set its `theme` to one of the skins. To add a new skin:
 
 1. Write `packs/<id>.json` with `"theme": "<id>"`, and add the id to `PACK_ORDER` and `THEMES` in `scripts/build-packs.mjs`.
-2. In `player/player.css`, add a `.cx[data-theme="<id>"]` block. Most of a skin is custom properties: background, tile, selection and button colors, the four group colors (`--cx-y`, `--cx-g`, `--cx-b`, `--cx-p`), fonts, corner radius, and `--cx-cw`, the average capital width of the tile font, which the tiles use to shrink long words onto one line.
+2. In `player/player.css`, add a `.cx[data-theme="<id>"]` block. Most of a skin is custom properties: background, tile, selection and button colors, the four group colors (`--cx-y`, `--cx-g`, `--cx-b`, `--cx-p`), fonts, corner radius, and `--cx-cw`, the average capital width of the tile font, which the tiles use to shrink long words onto one line. The newsprint skin is a good small example: it is custom properties, a background, and a few rules for the masthead, the bands and the reveal.
 3. In `player/player.js`, add an entry to `THEMES` (end-of-game lines and the confetti's colors and shape). For decoration, `applyTheme()` adds SVG to the decoration layer, and `themeSolve()` and `finish()` hold the per-group and win effects.
 4. Run `npm test` and `npm run test:e2e`, then look at the new screenshots.
 
@@ -247,60 +298,65 @@ Writing a good puzzle by hand, in my experience: start from the purple group (th
 
 ## Running it locally
 
-**Just the game (no AI).** No install needed: open `index.html` in a browser, or serve the folder:
-
-```bash
-python3 -m http.server 8000   # then open http://localhost:8000
-```
-
-On `localhost` the page looks for the generator at `http://localhost:3000`. If it isn't running, a new puzzle falls back to a saved one.
-
-**With live generation.**
-
 ```bash
 npm install
-cp .env.example .env
-# set JETSTREAM_API_KEY and TAVILY_API_KEY (free route), or OPENAI_API_KEY
-npm start            # http://localhost:3000
+cp .env.example .env     # set OPENROUTER_API_KEY and ADMIN_PASSWORD; Supabase and NYT_API_KEY are optional
+npm start                # http://localhost:3000 serves the page and the API
 ```
 
-Then serve the folder as above, pick **About Ben**, and type a name and a town. A puzzle takes 30 seconds to three minutes, because the model searches first. `window.CONNECTIONS_API_BASE` in [`config.js`](config.js) points a hosted copy at a server somewhere else.
+Open http://localhost:3000. Today's paper loads The New York Times puzzle (the first one of the day takes about half a minute to write; after that it is instant from the local store in `data/cx_store.local.json`). The history and admin pages are at `/history.html` and `/admin.html`.
 
-The local server also has `GET /api/history` (every puzzle it has made, read by [`viewer.html`](viewer.html)), `GET /api/ping`, and `POST /api/client-log`.
+Without any key, the page still serves and the packs play; the live modes say the writer is switched off. `window.CONNECTIONS_API_BASE` in [`config.js`](config.js) points a hosted copy at a server somewhere else.
+
+Endpoints: `POST /api/puzzle`, `GET /api/papers`, `GET /api/history`, `POST /api/admin`, `GET /api/ping`, and from the first version `POST /api/generate`, `GET /api/about-history` (local only, read by [`viewer.html`](viewer.html)) and `POST /api/client-log`.
 
 ## Deploying
 
-- **GitHub Pages** serves `main` from the repo root (`.nojekyll` keeps it from running Jekyll). Merging to `main` deploys it.
-- **Vercel** (`connections-about-you`, team `cmu-demos`): `npx vercel deploy --prod` from this folder. Keys live only in the Vercel project's environment variables. `vercel.json` gives the function up to 300 seconds and installs production dependencies only.
+- **Vercel** (`connections-about-you`, team `cmu-demos`): `npx vercel deploy --prod` from this folder. `vercel.json` gives the puzzle function up to 300 seconds. Set these in the project's environment variables (never in the repo):
+
+  | Variable | Needed for |
+  | --- | --- |
+  | `OPENROUTER_API_KEY` | Writing puzzles at all. |
+  | `ADMIN_PASSWORD` | The admin page. Make a new one for this project. |
+  | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Keeping the history and the admin's model choice. Run [`supabase/001_cx.sql`](supabase/001_cx.sql) once in the project's SQL editor to create `cx_settings` and `cx_puzzles`. Without these, every visit may write a new puzzle and nothing is kept. |
+  | `NYT_API_KEY` | Optional: real abstracts from the Times' Top Stories API. |
+  | `DEFAULT_MODEL`, `DAILY_CAP`, `NEWS_TZ`, `PER_IP_WINDOW`, `PER_IP_DAY`, `MAX_IN_FLIGHT`, `ALLOWED_ORIGINS` | Optional tuning; see [`.env.example`](.env.example). |
+
+- **GitHub Pages** serves `main` from the repo root (`.nojekyll` keeps it from running Jekyll). Merging to `main` deploys it; it plays the packs and points to the live game for the rest.
 - **ben.collier.phd**: in the site repo, run `scripts/sync_connections.sh` to copy the player and packs from this repo, rebuild with `python3 scripts/build.py`, and open a pull request there.
 
-## Costs
+## Costs and brakes
 
-The static versions cost nothing. Live generation is set up so that nothing can run up a bill:
+A puzzle is one model call of about 5,000 input and 2,500 output tokens (the headlines are most of the input): about $0.07 on Claude Opus 5.5, $0.03 on Sonnet 5.5, under a cent on Haiku 5.5. OpenRouter reports the exact cost per call and it is saved with the puzzle, so the admin page can show what today cost. Saved puzzles cost nothing, and the first visitor of the day pays for everyone who picks the same paper.
 
-1. **Nothing to bill.** gpt-oss-120b on Jetstream2 runs on an academic allocation, and Tavily's free plan stops at its monthly credits instead of charging (the puzzle is then made without search results). If OpenAI is used instead, its key belongs to its own OpenAI project with a monthly budget and a hard limit, so past the budget OpenAI refuses the call and the page plays a saved puzzle.
-2. **Only this page may call it.** Requests from other sites, or with no `Origin`, get a 403.
-3. **Per-visitor limits.** Three puzzles per 15 minutes and eight a day per IP address, and at most two in progress per server instance. These live in memory and reset with each new Vercel instance, so they slow abuse rather than stop it; the first guard is the real one.
+The brakes, outermost first:
+
+1. **The OpenRouter key's own credit limit**, which is the guarantee.
+2. **A daily cap** on new puzzles across all visitors and both modes (150 by default; the admin can change it), counted in the database, so it survives restarts. Past the cap, saved puzzles still play.
+3. **Only this page may call the writer**: requests from other sites, or with no `Origin`, get a 403.
+4. **Per-visitor limits**: six new puzzles per 15 minutes and twenty a day per IP address, and at most three in progress per server instance. These live in memory and reset with each new Vercel instance, so they slow abuse rather than stop it.
+
+Every refusal comes back to the page as a plain message, and the page keeps whatever puzzle it was showing.
 
 ## Privacy: what is and isn't published
 
-- **Published:** the hand-made packs, and the five puzzles GPT-5 wrote about me (`packs/ben.json`, `data/history.jsonl`), which use only public pages about me. The tests fail if the committed history or the About Ben pack holds anyone else.
-- **Not published, on Vercel:** names and towns typed by visitors are never written anywhere. Nothing is stored on disk, there is no history endpoint, and the logging endpoint stores nothing.
-- **Not published, locally:** the local server writes every prompt and model reply to `logs/app.log` (git-ignored) and every puzzle to `data/history.jsonl`. That second file *is* tracked, because it seeds the Vercel memory, so if you make puzzles about other people locally, restore it with `git checkout data/history.jsonl` before committing. The test above catches it if you forget.
-- **Never:** puzzles about private people, keys (`.env` and `.env.local` are git-ignored), or anything from `logs/`.
+- **Published:** the hand-made packs; the five puzzles GPT-5 wrote about me (`packs/ben.json`, `data/history.jsonl`); and every puzzle the live writers produce, which anyone can read on the history page. Those contain headlines, links and abstracts from the papers (which belong to their publishers) and the model's words, and nothing about the player.
+- **Never stored:** who played, from where, what they guessed, or what topic they typed beyond the topic itself as the puzzle's key. The admin password is compared on the server and kept only in the admin's own browser session.
+- **Keys** live in `.env` (git-ignored) or the Vercel project, never in the repo.
+- **Locally:** the local server writes its logs to `logs/` and the local history to `data/cx_store.local.json`, both git-ignored. The older about-you generator still appends to `data/history.jsonl`, which *is* tracked, so if you make puzzles about other people locally, restore it with `git checkout data/history.jsonl` before committing; the tests catch it if you forget.
 - The page loads Google Fonts and nothing else from a third party. There is no analytics in this repo.
 
 ## Testing
 
 ```bash
-npm test          # validator + packs (node:test), and packs/packs.js is up to date
-npm run test:e2e  # Playwright: every theme at 1440 and 390 wide, plus keyboard + reduced motion at 360
+npm test          # node:test: validator, packs, feed parsing, prompts, schema, handler input checks
+npm run test:e2e  # Playwright: every pack theme at 1440 and 390 wide, plus keyboard + reduced motion at 360
 npm run gifs      # re-records the README GIFs (needs ffmpeg)
 ```
 
-`npm test` checks every puzzle (four groups of four, sixteen distinct words, one of each color, a reason per group, yellow to purple order in the hand-made packs), that the validator catches a repeated word, a group of three or five, and a missing color or reason, and the privacy rules above.
+`npm test` runs without a network or a model key. Beyond the pack checks of the first version, [`test/live.test.mjs`](test/live.test.mjs) covers the RSS and Atom parser (titles, links, cleaned summaries, dates, sections from the article path and never from keyword tags), that each of the eleven papers has a source, what the two briefs must contain, the extended schema (a story per group, four definitions per group), the one-line summary that keeps the day's puzzles from repeating, JSON extraction from a chatty reply, and the handlers' refusals: a foreign origin, a bad mode, an unknown paper, an empty topic, a wrong admin password, and no admin password configured.
 
-`npm run test:e2e` serves the folder, opens each theme's first puzzle in headless Chromium at desktop and phone size, and saves four screenshots to [`docs/screenshots/`](docs/screenshots/): the start, one solved group, a wrong guess mid-shake with the "One away" toast, and the win screen (plus a frame of the Star Wars crawl). Along the way it checks the mistake dots, that a repeated guess costs nothing, the copied share grid, the four explanations, no sideways scrolling, and no console errors. A third pass plays a whole Carnegie Mellon puzzle with only the keyboard, with reduced motion on, at 360px, and a fourth loses a Lord of the Rings puzzle on purpose to check that all four groups are revealed.
+The screenshots at the top of this file were taken with the same Playwright setup against the local server, playing a real puzzle of the day.
 
 | Start | One group solved | Wrong guess | Win |
 | --- | --- | --- | --- |
@@ -308,12 +364,13 @@ npm run gifs      # re-records the README GIFs (needs ffmpeg)
 
 ## Limitations
 
-- **The AI's puzzles are uneven.** The checks guarantee the shape, not the quality. Some AI groups are trivia lists with no trap ("PITTSBURGH PRO TEAMS"), purple groups often aren't wordplay, and the difficulty colors are the model's guess. The hand-made packs are better puzzles, which is part of the point.
-- **Facts can be wrong.** The live puzzles come from web search and a model's summary of it. The game shows its sources so a player can check, but it doesn't check them itself.
+- **The AI's puzzles are uneven.** The checks guarantee the shape, not the quality. Some groups are lists without a trap, and the difficulty colors are the model's guess. Opus 5.5 is noticeably better at red herrings than the models of a year ago, which is why it is the default.
+- **Headlines are thin for some papers.** The Wall Street Journal, The Washington Post (when its feeds are down) and Pittsburgh Business Times come through Google News as headlines only, so the model has less to work with, and their links go through a Google redirect before reaching the paper. A publisher API key fixes this where one exists (the Times today).
+- **Facts can be wrong.** A group is the model's reading of a headline and a one-line summary. The reveal shows the story so a player can check.
+- **Study cards are not a textbook.** Definitions are the model's, in fifteen words. The page says so.
 - **Uniqueness isn't proven.** The validator checks that words don't repeat, not that only one grouping works. A fifth word that fits a group is the most common flaw, in AI puzzles and in mine.
-- **Rate limits are best effort.** They live in one Vercel instance's memory.
+- **Per-visitor limits are best effort.** They live in one Vercel instance's memory; the daily cap and the key's credit limit are the real brakes.
 - **Fan content.** The Star Wars and Lord of the Rings packs reflect the films and books as I and the fan wikis understand them; corrections are welcome.
-- **Single-player and stateless.** There is no streak, no daily puzzle, and nothing saved between visits.
 
 ## Notes: using an LLM as a game engine
 
@@ -326,30 +383,45 @@ npm run gifs      # re-records the README GIFs (needs ffmpeg)
 - A static site can't keep a key secret, which is why the demo is saved puzzles. Deciding where the key lives (a server with hard spending limits) shaped the whole architecture more than the model choice did.
 - Free open models (gpt-oss-120b on Jetstream2) were good enough once search moved out of the model and into the server. The model's own web search was convenient but made cost and latency less predictable.
 - Showing the AI's reasons and sources at the end turned mistakes into conversation: players argue with a wrong fact, which is more fun than being silently misled.
+- The second version taught me the opposite lesson about search: for news, don't let the model find the stories. Fetching the day's headlines in code and handing the model a numbered list, then taking the link back by number, means every "read the full story" link is real. The model never types a URL.
+- Caching by (paper, day) and (topic) changed the economics more than the model choice. The first visitor pays about seven cents; everyone else that day plays the same puzzle free, and "Another puzzle" only writes a new one when the saved ones run out.
+- For study cards, asking for a definition per word was the cheapest way to make the model honest: a term it cannot define in fifteen words tends to be one it should not have used.
+
 
 ## Files
 
 | Path | What it is |
 | --- | --- |
-| `index.html`, `script.js`, `styles.css` | The page: theme picker, the live form, the page around the game. |
-| `player/player.js`, `player/player.css` | The game and its four themes. Shared with ben.collier.phd. |
+| `index.html`, `script.js`, `styles.css` | The page: mode tabs, the paper menu, the topic form, deep links, the page around the game. |
+| `history.html` | Every saved game, with a filter and a replay button. |
+| `admin.html` | Password, model dropdown with prices, daily cap, today's count and cost, recent puzzles. |
+| `player/player.js`, `player/player.css` | The game, its themes (notebook, Star Wars, Lord of the Rings, Carnegie Mellon, newsprint) and the reveal under a solved group. Shared with ben.collier.phd. |
 | `packs/*.json`, `packs/packs.js` | The puzzle packs and their generated bundle. |
 | `scripts/build-packs.mjs` | Validates the packs and writes `packs/packs.js`. |
-| `config.js` | Where the generator runs. Empty means the default rules above. |
-| `viewer.html` | Every saved AI puzzle side by side, or the local server's history. |
-| `server/validate.js` | The puzzle checks, shared by the generator, the bundler and the tests. |
-| `server/generator.js` | The prompt, the model call, search, retries. |
-| `server/index.js` | Local Express server. Writes `logs/app.log` and `data/history.jsonl`. |
-| `api/*.js`, `vercel.json` | The Vercel deployment and its cost limits. |
-| `data/history.jsonl` | Saved puzzles (only about me), the seed of the last-20 memory. |
-| `nyt_connections_groups_*.csv` | Real NYT groups used as examples in the prompt. |
-| `test/` | `packs.test.mjs` (node:test) and `e2e/` (Playwright checks and the GIF recorder). |
-| `docs/screenshots/`, `docs/gifs/` | Test screenshots and README GIFs. |
+| `config.js` | Where the server runs. Empty means same origin, or localhost:3000 from a file. |
+| `viewer.html` | The About Ben puzzles side by side, or the local about-you history. |
+| `server/handlers.js` | The HTTP handlers: puzzle, history, admin, papers, ping. Shared by Express and Vercel. |
+| `server/news.js` | The eleven papers and how to read each one's headlines. |
+| `server/puzzles.js` | The two briefs, the checks, the retries. |
+| `server/llm.js` | OpenRouter: one completion, the model list with prices. |
+| `server/store.js` | Supabase through its REST API, or a local JSON file in development. |
+| `server/settings.js` | The model and the daily cap: database value, env default, one-minute cache. |
+| `server/guard.js` | Origin check, per-visitor rate limits, in-flight cap. |
+| `server/validate.js`, `server/parse.js` | The puzzle schema and checks; JSON extraction from a model reply. |
+| `server/generator.js` | The first version's about-you writer (OpenAI or Jetstream2 + Tavily). |
+| `server/index.js` | Local Express server: the handlers above, static files, the about-you routes. |
+| `api/*.js`, `vercel.json` | The Vercel functions (one line each) and their limits. |
+| `supabase/001_cx.sql` | The two tables: `cx_settings`, `cx_puzzles`. |
+| `data/history.jsonl` | The first version's saved puzzles (only about me). |
+| `nyt_connections_groups_*.csv` | Real NYT groups used as examples in the prompts. |
+| `test/` | `packs.test.mjs`, `live.test.mjs` (node:test) and `e2e/` (Playwright checks and the GIF recorder). |
+| `docs/screenshots/`, `docs/gifs/` | Screenshots and README GIFs. |
 
 ## Credits
 
 - Inspired by [Connections](https://www.nytimes.com/games/connections) from The New York Times Games, by Wyna Liu. This project is not affiliated with or endorsed by The New York Times.
 - The Star Wars and The Lord of the Rings packs are fan-made trivia, with no affiliation with or endorsement by Lucasfilm, Disney, the Tolkien Estate, Middle-earth Enterprises or the film studios. All names belong to their owners; all artwork here is original CSS and SVG.
 - The Carnegie Mellon pack is my own, made for fun as a faculty member, and is not an official university product. No university logos or marks are used.
-- Fonts from Google Fonts: Kalam, IBM Plex Mono, Literata, Cinzel, IM Fell English and Orbitron.
-- Built with Claude Code, OpenAI GPT-5, and gpt-oss-120b on [Jetstream2](https://jetstream-cloud.org/) (NSF ACCESS), with search by [Tavily](https://tavily.com/).
+- Fonts from Google Fonts: Kalam, IBM Plex Mono, Literata, Cinzel, IM Fell English, Orbitron, Playfair Display and UnifrakturMaguntia.
+- Headlines come from each paper's own RSS feeds, the New York Times Top Stories API, or Google News, and belong to their publishers. The newspaper list is Carnegie Mellon University Libraries' [digital news subscriptions](https://guides.library.cmu.edu/digital_news/home); access to the stories is through each reader's own subscription.
+- Built with Claude Code. Live puzzles are written by Claude Opus 5.5 through [OpenRouter](https://openrouter.ai/) (the model is a setting). The About Ben pack was written by OpenAI GPT-5, and the earlier free route used gpt-oss-120b on [Jetstream2](https://jetstream-cloud.org/) (NSF ACCESS) with search by [Tavily](https://tavily.com/).

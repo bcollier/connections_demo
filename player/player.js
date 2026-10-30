@@ -47,6 +47,10 @@
       won: 'My heart is in the work: solved!', lost: 'Out of mistakes. Back to the library.',
       confetti: ['#c41230', '#6d6e71', '#1b1b1b', '#e0b13a', '#ffffff', '#1f5f3a'], shape: 'square',
     },
+    news: {
+      won: 'Solved. Stop the presses!', lost: 'Out of mistakes. Read all about it below.',
+      confetti: ['#1d1d1b', '#b8352a', '#f3efe6', '#8a8578', '#e9d98a'], shape: 'paper',
+    },
   };
 
   const mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -90,6 +94,8 @@
       words: c.words.map(w => String(w).toUpperCase()),
       explanation: c.explanation || '',
       color: COLORS.includes(c.color) ? c.color : COLORS[i % 4],
+      story: c.story && c.story.url ? c.story : null,
+      definitions: Array.isArray(c.definitions) && c.definitions.length === 4 ? c.definitions.map(String) : null,
     }));
     cats.sort((a, b) => COLORS.indexOf(a.color) - COLORS.indexOf(b.color));
     return { ...p, categories: cats };
@@ -323,6 +329,8 @@
     // ----- theme picker -----
     function renderPicker() {
       picker.innerHTML = '';
+      picker.hidden = Boolean(S.pack && S.pack.live);
+      if (picker.hidden) return;
       for (const p of packs) {
         picker.appendChild(el('button', {
           type: 'button', class: 'cx-pick', 'data-pack': p.id, 'aria-pressed': String(S.pack && S.pack.id === p.id),
@@ -452,6 +460,27 @@
         el('strong', { class: 'cx-band-label', text: cat.label }),
         el('span', { class: 'cx-band-words', text: cat.words.join(', ') }));
       return b;
+    }
+
+    /** What a solved group reveals: the news story behind it, or the flash-card definitions. */
+    function reveal(cat, missed) {
+      if (!cat.story && !cat.definitions && !(S.pack.live && cat.explanation)) return null;
+      const src = S.puzzle.source || {};
+      const box = el('aside', { class: 'cx-reveal' + (missed ? ' cx-reveal-missed' : ''), 'data-color': cat.color, 'aria-label': `About the group ${cat.label}` });
+      if (cat.story) {
+        const st = cat.story;
+        box.append(
+          el('p', { class: 'cx-reveal-kicker', text: `The story behind it \u00b7 ${src.short || src.name || 'today\'s paper'}${st.section ? ' \u00b7 ' + st.section : ''}` }),
+          el('h4', { class: 'cx-reveal-head' }, el('a', { href: st.url, target: '_blank', rel: 'noopener noreferrer', text: st.title })),
+          st.summary ? el('p', { class: 'cx-reveal-sum', text: st.summary }) : null,
+          cat.explanation ? el('p', { class: 'cx-reveal-why', text: cat.explanation }) : null,
+          el('p', { class: 'cx-reveal-link' }, el('a', { href: st.url, target: '_blank', rel: 'noopener noreferrer', text: `Read the full story in ${src.short || src.name || 'the paper'} \u2197` })));
+      } else {
+        box.append(el('p', { class: 'cx-reveal-kicker', text: cat.definitions ? 'Study cards' : 'Why they belong together' }));
+        if (cat.explanation) box.append(el('p', { class: 'cx-reveal-why', text: cat.explanation }));
+        if (cat.definitions) box.append(el('dl', { class: 'cx-defs' }, cat.words.flatMap((w, i) => [el('dt', { text: w }), el('dd', { text: cat.definitions[i] || '' })])));
+      }
+      return box;
     }
 
     function renderStatus() {
@@ -623,6 +652,8 @@
       const b = band(cat, missed);
       solvedEl.appendChild(b);
       if (!reduced()) b.classList.add('cx-band-in');
+      const r = reveal(cat, missed);
+      if (r) { solvedEl.appendChild(r); if (!reduced()) r.classList.add('cx-reveal-in'); }
       themeSolve(b, cat, missed);
       const first = grid.querySelector('.cx-tile');
       if (first) first.setAttribute('tabindex', '0');
@@ -709,9 +740,13 @@
       if (!S.pack.live && S.pack.puzzles.length > 1) {
         buttons.appendChild(el('button', { type: 'button', class: 'cx-btn', text: 'Next puzzle', onclick: () => setPack(S.pack.id, (S.index + 1) % S.pack.puzzles.length, true) }));
       }
+      if (S.pack.live && opts.more) {
+        buttons.appendChild(el('button', { type: 'button', class: 'cx-btn', text: opts.more.label || 'Another puzzle', onclick: () => opts.more.onclick(S.pack) }));
+      }
       const why = el('ol', { class: 'cx-why' }, S.puzzle.categories.map(c => el('li', { 'data-color': c.color },
         el('strong', { text: c.label }), ' ', el('span', { class: 'cx-why-words', text: `(${c.words.join(', ')})` }),
-        c.explanation ? el('span', { class: 'cx-why-text', text: ' ' + c.explanation }) : null)));
+        c.explanation ? el('span', { class: 'cx-why-text', text: ' ' + c.explanation }) : null,
+        c.story ? el('span', { class: 'cx-why-story' }, ' From: ', el('a', { href: c.story.url, target: '_blank', rel: 'noopener noreferrer', text: c.story.title })) : null)));
       end.append(
         h,
         el('p', { class: 'cx-end-sum', text: summary }),
@@ -784,5 +819,5 @@
     };
   }
 
-  window.ConnectionsPlayer = { mount, version: '2.0.0' };
+  window.ConnectionsPlayer = { mount, version: '2.1.0' };
 })();

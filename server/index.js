@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { makePuzzle, RequestSchema, MODEL } from './generator.js';
+import * as H from './handlers.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -14,22 +15,21 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Basic health route
-app.get('/', (_req, res) => {
-  res.type('text/plain').send('OK');
-});
-
-// History API (read-only)
-app.get('/api/history', (_req, res) => {
+// The older "about you" generator's local history (data/history.jsonl), read-only.
+app.get('/api/about-history', (_req, res) => {
   const rows = readRecentHistory(200);
   res.json({ items: rows });
 });
 
-// Health check / ping
-app.get('/api/ping', (_req, res) => {
-  logEvent({ event: 'ping' });
-  res.json({ ok: true, ts: new Date().toISOString() });
-});
+// The news and study-cards game, the saved-games history and the admin page
+// share their handlers with the Vercel functions in api/.
+app.get('/api/ping', H.ping);
+app.get('/api/papers', H.papers);
+app.post('/api/puzzle', H.puzzle);
+app.get('/api/history', H.history);
+app.post('/api/admin', H.admin);
+// Serve the page itself too, so http://localhost:3000 is the whole app.
+app.use(express.static(path.resolve(process.cwd()), { extensions: ['html'] }));
 
 // Client-side log bridge (best-effort)
 app.post('/api/client-log', (req, res) => {
