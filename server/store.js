@@ -43,6 +43,43 @@ async function rest(path, { method = 'GET', body, prefer } = {}) {
   try { return await res.json(); } catch { return null; }
 }
 
+// ---------------------------------------------------------------------------
+// A short lease so two visitors who ask for the same unwritten puzzle at the
+// same moment do not both pay for one. The lease is a cx_settings row whose
+// primary key makes the insert atomic; the loser waits for the winner's save.
+// ---------------------------------------------------------------------------
+const lockKey = name => `lock:${name}`;
+
+/** Take the lease `name` for `ttlMs`. True if this caller now holds it. */
+export async function acquireLock(name, ttlMs = 120000) {
+  const key = lockKey(name);
+  const now = Date.now();
+  const value = { until: now + ttlMs, taken: new Date(now).toISOString() };
+  if (await useLocal()) {
+    const db = localRead();
+    const cur = db.settings[key];
+    if (cur && cur.until > now) return false;
+    db.settings[key] = value; localWrite(db); return true;
+  }
+  // Insert only if absent: a duplicate key returns no rows instead of an error.
+  const rows = await rest('cx_settings', {
+    method: 'POST', prefer: 'resolution=ignore-duplicates,return=representation',
+    body: { key, value, updated_at: new Date(now).toISOString() },
+  });
+  if (rows === null) return true;                 // no store at all: nothing to coordinate with
+  if (Array.isArray(rows) && rows.length) return true;
+  const cur = await getSetting(key);              // held: take it over only if it has expired
+  if (cur && cur.until > now) return false;
+  return setSetting(key, value);
+}
+
+/** Give the lease back (a no-op if it was not held). */
+export async function releaseLock(name) {
+  const key = lockKey(name);
+  if (await useLocal()) { const db = localRead(); delete db.settings[key]; localWrite(db); return; }
+  await rest(`cx_settings?key=eq.${encodeURIComponent(key)}`, { method: 'DELETE' });
+}
+
 /** The value stored under `key`, or undefined. */
 export async function getSetting(key) {
   if (await useLocal()) return localRead().settings[key];

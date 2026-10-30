@@ -165,15 +165,16 @@ function modelName(id) {
   return (m ? m[1] : id || 'the model').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/(\d) (\d)/g, '$1.$2');
 }
 
-async function playNews({ fresh = false } = {}) {
+async function playNews({ fresh = false, savedOnly = false } = {}) {
   if (DEMO_MODE || S.busy) return;
   const paper = paperInfo(paperSelect.value);
   const key = `news:${paper.id}`;
   S.busy = true; $('newsPlay').disabled = true; $('newsAnother').disabled = true;
   startLoader('news', LOADER.news(paper.name));
   try {
-    const data = await requestPuzzle({ mode: 'news', paper: paper.id, seen: S.seen[key] || [], fresh });
+    const data = await requestPuzzle({ mode: 'news', paper: paper.id, seen: S.seen[key] || [], fresh, savedOnly });
     stopLoader();
+    if (data.none) { nothingSaved('news', paper); return; }
     loadLive('news', data, key);
   } catch (err) {
     stopLoader();
@@ -183,7 +184,7 @@ async function playNews({ fresh = false } = {}) {
   }
 }
 
-async function playStudy(topic, { fresh = false } = {}) {
+async function playStudy(topic, { fresh = false, savedOnly = false } = {}) {
   if (DEMO_MODE || S.busy) return;
   topic = (topic || '').replace(/\s+/g, ' ').trim();
   if (topic.length < 2) { topicInput.focus(); return; }
@@ -192,8 +193,9 @@ async function playStudy(topic, { fresh = false } = {}) {
   S.busy = true; $('studyPlay').disabled = true; $('studyAnother').disabled = true;
   startLoader('study', LOADER.study(topic));
   try {
-    const data = await requestPuzzle({ mode: 'study', topic, seen: S.seen[key] || [], fresh });
+    const data = await requestPuzzle({ mode: 'study', topic, seen: S.seen[key] || [], fresh, savedOnly });
     stopLoader();
+    if (data.none) { nothingSaved('study', topic); return; }
     loadLive('study', data, key);
   } catch (err) {
     stopLoader();
@@ -201,6 +203,13 @@ async function playStudy(topic, { fresh = false } = {}) {
   } finally {
     S.busy = false; $('studyPlay').disabled = false; $('studyAnother').disabled = false;
   }
+}
+
+/** Opening the page only asks for a saved puzzle, so nothing is spent until someone presses a button. */
+function nothingSaved(mode, what) {
+  if (!S.info || !S.info.live) return; // the switched-off message is already showing
+  if (mode === 'news') status('news', `Nobody has asked for today's ${what.short} puzzle yet. Press "Play today's puzzle" and the writer makes one from this morning's headlines (about half a minute).`);
+  else status('study', `No saved deck on ${what} yet. Press "Deal the cards" to have one written (about half a minute).`);
 }
 
 /** The "Another puzzle" button: a saved one this browser has not played, or a new one. */
@@ -225,7 +234,7 @@ async function playSaved(id) {
 // ----- forms -----
 $('newsForm').addEventListener('submit', e => { e.preventDefault(); playNews(); });
 $('newsAnother').addEventListener('click', () => playNews());
-paperSelect.addEventListener('change', () => { $('newsAnother').hidden = true; playNews(); });
+paperSelect.addEventListener('change', () => { $('newsAnother').hidden = true; playNews({ savedOnly: true }); });
 $('studyForm').addEventListener('submit', e => { e.preventDefault(); playStudy(topicInput.value); });
 $('studyAnother').addEventListener('click', () => playStudy(S.current && S.current.topic || topicInput.value));
 document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => playStudy(c.dataset.topic)));
@@ -260,12 +269,12 @@ async function init() {
   if (q.get('theme') || want === 'packs') { setMode('packs'); return; }
   if (want === 'study') {
     setMode('study');
-    if (q.get('topic')) playStudy(q.get('topic'));
+    if (q.get('topic')) playStudy(q.get('topic'), { savedOnly: true });
     return;
   }
   if (q.get('paper') && [...paperSelect.options].some(o => o.value === q.get('paper'))) paperSelect.value = q.get('paper');
   setMode('news');
-  playNews();
+  playNews({ savedOnly: true }); // free: a saved puzzle or a nudge to press Play
 }
 
 // ----- the older "about you" generator, kept for the About Ben theme -----

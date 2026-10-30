@@ -8,6 +8,7 @@ import { newsPrompt, studyPrompt, summarize } from '../server/puzzles.js';
 import { OutputSchema, puzzleProblems } from '../server/validate.js';
 import { extractJsonCandidate } from '../server/parse.js';
 import { puzzle, admin, papers } from '../server/handlers.js';
+import { acquireLock, releaseLock } from '../server/store.js';
 
 const RSS = `<?xml version="1.0"?><rss><channel><title>Feed</title>
 <item><title>Intel Shares Fall 22% &amp; More</title><link>https://www.example.com/2026/10/29/business/intel.html</link>
@@ -120,6 +121,27 @@ test('POST /api/puzzle refuses other sites, bad modes, unknown papers and empty 
   res = fakeRes();
   await puzzle(fakeReq({ method: 'GET' }), res);
   assert.equal(res.code, 405);
+});
+
+test('POST /api/puzzle with savedOnly never writes: an unknown topic answers none', async () => {
+  const res = fakeRes();
+  await puzzle(fakeReq({ body: { mode: 'study', topic: `never-studied-${Date.now()}`, savedOnly: true } }), res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.none, true);
+  assert.equal(res.body.saved, 0);
+});
+
+test('the writing lease is held by one caller at a time', async () => {
+  const name = `test:${Date.now()}`;
+  assert.equal(await acquireLock(name, 60000), true);
+  assert.equal(await acquireLock(name, 60000), false);
+  await releaseLock(name);
+  assert.equal(await acquireLock(name, 60000), true);
+  await releaseLock(name);
+  assert.equal(await acquireLock(name, 1), true);        // an expired lease can be taken over
+  await new Promise(r => setTimeout(r, 5));
+  assert.equal(await acquireLock(name, 60000), true);
+  await releaseLock(name);
 });
 
 test('POST /api/admin needs the password, and says so when none is configured', async () => {

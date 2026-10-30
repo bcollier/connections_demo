@@ -38,10 +38,14 @@ export async function papers(_req, res) {
 }
 
 // ---------------------------------------------------------------------------
-// POST /api/puzzle { mode: 'news', paper, seen: [ids], fresh }
-//                  { mode: 'study', topic, seen: [ids], fresh }
+// POST /api/puzzle { mode: 'news', paper, seen: [ids], fresh, savedOnly }
+//                  { mode: 'study', topic, seen: [ids], fresh, savedOnly }
 // Plays a saved puzzle for the same paper-and-day or topic when there is one
 // the visitor has not seen; otherwise writes a new one and saves it.
+// savedOnly (what the page sends when it merely opens) answers { none: true }
+// instead of writing, so a page load, a crawler or a preview never spends.
+// When another visitor is already writing the same puzzle, this request waits
+// for that one rather than paying for a second.
 // ---------------------------------------------------------------------------
 export async function puzzle(req, res) {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'method' }); }
@@ -52,6 +56,7 @@ export async function puzzle(req, res) {
   if (!mode) return res.status(400).json({ error: 'input', message: 'mode must be news or study' });
   const seen = new Set(Array.isArray(input.seen) ? input.seen.map(String).slice(0, 200) : []);
   const fresh = Boolean(input.fresh);
+  const savedOnly = Boolean(input.savedOnly);
 
   let paper = null, topic = '', key;
   if (mode === 'news') {
@@ -66,13 +71,15 @@ export async function puzzle(req, res) {
 
   // 1. A saved puzzle the visitor has not played yet.
   const saved = await store.findPuzzles(mode, key, 40);
+  const unseenOf = rows => rows.filter(r => !seen.has(String(r.id)));
   if (!fresh) {
-    const unseen = saved.filter(r => !seen.has(String(r.id)));
+    const unseen = unseenOf(saved);
     if (unseen.length) {
       const r = unseen[unseen.length - 1]; // oldest unseen first, so everyone starts with the day's first puzzle
       return res.status(200).json({ ...publicRow(r), cached: true, saved: saved.length });
     }
   }
+  if (savedOnly) return res.status(200).json({ none: true, saved: saved.length, live: hasKey() });
 
   // 2. Otherwise write one, within the brakes.
   if (!hasKey()) return res.status(503).json({ error: 'nokey', message: 'The puzzle writer is switched off (no model key on the server).', saved: saved.length });
@@ -81,7 +88,15 @@ export async function puzzle(req, res) {
   const cap = await getDailyCap();
   const madeToday = await store.countSince(startOfToday());
   if (madeToday !== null && madeToday >= cap) return res.status(429).json({ error: 'cap', message: `Today's budget of ${cap} new puzzles is used up. Saved puzzles still play.`, saved: saved.length });
-  if (!take(ip)) return res.status(429).json({ error: 'rate', message: 'That is a lot of new puzzles from one place. Try again in a few minutes.', saved: saved.length });
+
+  // 3. One writer per puzzle. Whoever asks second waits for the first one's save.
+  const lease = `${mode}:${key}`;
+  if (!(await store.acquireLock(lease, LOCK_MS))) {
+    const r = await waitForSaved(mode, key, unseenOf, saved.length);
+    if (r) return res.status(200).json({ ...publicRow(r), cached: true, waited: true, saved: saved.length + 1 });
+    return res.status(429).json({ error: 'busy', message: 'Someone else is having this puzzle written right now. Try again in a moment.', saved: saved.length });
+  }
+  if (!take(ip)) { await store.releaseLock(lease); return res.status(429).json({ error: 'rate', message: 'That is a lot of new puzzles from one place. Try again in a few minutes.', saved: saved.length }); }
 
   begin();
   try {
@@ -107,7 +122,27 @@ export async function puzzle(req, res) {
     return res.status(502).json({ error: 'failed', message: 'The writer could not finish a puzzle this time. Try again.' });
   } finally {
     done();
+    await store.releaseLock(lease);
   }
+}
+
+const LOCK_MS = 150000;   // longer than the slowest generation (three attempts)
+const WAIT_MS = 110000;   // how long a second visitor waits for the first one's puzzle
+const POLL_MS = 3000;
+
+/** Poll the store until a puzzle for (mode, key) appears that this visitor has not seen. */
+async function waitForSaved(mode, key, unseenOf, had) {
+  const until = Date.now() + WAIT_MS;
+  while (Date.now() < until) {
+    await new Promise(r => setTimeout(r, POLL_MS));
+    const rows = await store.findPuzzles(mode, key, 40);
+    const unseen = unseenOf(rows);
+    if (rows.length > had && unseen.length) return unseen[0]; // newest unseen: the one just written
+    if (!(await store.acquireLock(`${mode}:${key}`, 1))) continue; // still being written
+    await store.releaseLock(`${mode}:${key}`);
+    return unseen.length ? unseen[0] : null; // the writer gave up (or failed) without saving
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
