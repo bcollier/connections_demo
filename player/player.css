@@ -69,7 +69,7 @@
 
 /* ----- the board ----- */
 .cx-stage { position: relative; }
-.cx-solved { display: grid; gap: 8px; margin-bottom: 8px; }
+.cx-solved { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 8px; }
 .cx-solved:empty { display: none; }
 .cx-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .cx-tile {
@@ -369,3 +369,83 @@
   .cx-map-edge, .cx-runes path { stroke-dashoffset: 0; }
   .cx[data-theme="ben"] .cx-tile { transform: none; }
 }
+
+/* =====================================================================
+   The reveal under a solved group: the news story that inspired it, or
+   the study-card definitions. Shared by every theme; the newsprint theme
+   below restyles it as a clipping.
+   ===================================================================== */
+.cx-reveal {
+  margin: -4px 6px 4px; padding: 10px 14px 12px;
+  background: var(--cx-tile); color: var(--cx-tile-fg);
+  border: 1.5px solid var(--cx-tile-edge); border-top: 0; border-radius: 0 0 var(--cx-radius) var(--cx-radius);
+  font-size: 14.5px; line-height: 1.45; min-width: 0; overflow-wrap: anywhere;
+}
+.cx-reveal[data-color="Yellow"] { border-left: 5px solid var(--cx-y); }
+.cx-reveal[data-color="Green"] { border-left: 5px solid var(--cx-g); }
+.cx-reveal[data-color="Blue"] { border-left: 5px solid var(--cx-b); }
+.cx-reveal[data-color="Purple"] { border-left: 5px solid var(--cx-p); }
+.cx-reveal-missed { opacity: .88; }
+.cx-reveal-in { animation: cx-reveal-in .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes cx-reveal-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.cx-reveal-kicker { margin: 0 0 4px; font-family: var(--cx-font-ui); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .72; }
+.cx-reveal-head { margin: 0 0 4px; font-family: var(--cx-font-body); font-size: 17px; line-height: 1.3; font-weight: 600; text-wrap: balance; }
+.cx-reveal-head a { color: inherit; text-decoration-color: var(--cx-focus); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.cx-reveal-sum { margin: 0 0 6px; opacity: .85; }
+.cx-reveal-why { margin: 0 0 6px; font-style: italic; }
+.cx-reveal-link { margin: 0; font-family: var(--cx-font-ui); font-size: 13px; }
+.cx-reveal-link a { color: var(--cx-focus); font-weight: 600; }
+.cx-defs { margin: 4px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; }
+.cx-defs dt { font-family: var(--cx-font-tile); font-weight: 700; font-size: 12.5px; letter-spacing: .02em; padding-top: 2px; }
+.cx-defs dd { margin: 0; }
+.cx-why-story a { color: inherit; }
+@media (max-width: 520px) {
+  .cx-reveal { margin: -4px 2px 2px; padding: 9px 11px 10px; font-size: 13.5px; }
+  .cx-defs { grid-template-columns: 1fr; gap: 2px; }
+  .cx-defs dd { margin: 0 0 6px; padding-left: 10px; }
+}
+
+/* =====================================================================
+   Theme: Newsprint. Today's paper: an off-white sheet with a hairline
+   column grid, a blackletter dateline, a serif masthead, groups as boxed
+   headlines and the stories as clippings. No logos; "The Daily Connections"
+   is this game's own masthead, not any newspaper's.
+   ===================================================================== */
+.cx[data-theme="news"] {
+  --cx-bg: #f3efe6; --cx-fg: #1d1d1b; --cx-muted: #5b5852;
+  --cx-tile: #faf7f0; --cx-tile-fg: #1d1d1b; --cx-tile-edge: rgba(29,29,27,.55);
+  --cx-sel: #1d1d1b; --cx-sel-fg: #f3efe6;
+  --cx-btn: #faf7f0; --cx-btn-fg: #1d1d1b; --cx-btn-edge: #1d1d1b;
+  --cx-primary: #1d1d1b; --cx-primary-fg: #f3efe6;
+  --cx-y: #efdc86; --cx-g: #bcd9a4; --cx-b: #b9d4ea; --cx-p: #d4c5e4;
+  --cx-focus: #b8352a; --cx-dot: #1d1d1b; --cx-wrong: #b8352a;
+  --cx-radius: 2px;
+  --cx-font-title: "Playfair Display", "Times New Roman", serif;
+  --cx-font-body: "Literata", Georgia, serif;
+  background-color: #f3efe6;
+  background-image:
+    radial-gradient(rgba(29,29,27,.035) 1px, transparent 1.2px),
+    linear-gradient(90deg, transparent calc(50% - .5px), rgba(29,29,27,.07) calc(50% - .5px), rgba(29,29,27,.07) calc(50% + .5px), transparent calc(50% + .5px));
+  background-size: 7px 7px, 100% 100%;
+}
+.cx[data-theme="news"] .cx-head { border-top: 3px double #1d1d1b; border-bottom: 1px solid #1d1d1b; padding: 8px 0 10px; margin-bottom: 14px; }
+.cx[data-theme="news"] .cx-kicker { font-family: "UnifrakturMaguntia", "Old English Text MT", var(--cx-font-title); font-size: 22px; letter-spacing: 0; text-transform: none; opacity: 1; color: #1d1d1b; margin: 0 0 2px; }
+.cx[data-theme="news"] .cx-kicker::after { content: ""; display: block; height: 1px; background: #1d1d1b; margin: 6px 0 4px; }
+.cx[data-theme="news"] .cx-title { font-weight: 900; letter-spacing: -.01em; font-size: clamp(26px, 5vw, 38px); line-height: 1.05; }
+.cx[data-theme="news"] .cx-intro { font-family: var(--cx-font-ui); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.cx[data-theme="news"] .cx-tile { border: 1px solid var(--cx-tile-edge); box-shadow: 1px 1px 0 rgba(29,29,27,.25); font-weight: 700; }
+.cx[data-theme="news"] .cx-tile[aria-pressed="true"] { box-shadow: 2px 2px 0 #b8352a; }
+.cx[data-theme="news"] .cx-band { border: 1px solid #1d1d1b; box-shadow: inset 0 0 0 3px var(--cx-bg), inset 0 0 0 4px #1d1d1b; }
+.cx[data-theme="news"] .cx-band-label { font-family: var(--cx-font-title); font-weight: 900; font-size: 20px; text-transform: none; letter-spacing: -.005em; }
+.cx[data-theme="news"] .cx-band-words { font-size: 12.5px; letter-spacing: .06em; }
+.cx[data-theme="news"] .cx-reveal { margin: 0 6px 6px; border: 1px solid #1d1d1b; border-top: 0; background: #faf7f0; border-left-width: 1px !important; column-rule: 1px solid rgba(29,29,27,.25); }
+.cx[data-theme="news"] .cx-reveal-kicker { color: #b8352a; opacity: 1; font-weight: 600; }
+.cx[data-theme="news"] .cx-reveal-head { font-family: var(--cx-font-title); font-weight: 700; font-size: 19px; }
+.cx[data-theme="news"] .cx-reveal-head a { text-decoration-color: rgba(29,29,27,.35); }
+.cx[data-theme="news"] .cx-reveal-sum::first-letter { font-family: var(--cx-font-title); font-weight: 900; font-size: 2.1em; line-height: .8; float: left; padding: 4px 6px 0 0; }
+.cx[data-theme="news"] .cx-reveal-link a { color: #b8352a; }
+.cx[data-theme="news"] .cx-btn { border-radius: 2px; }
+.cx[data-theme="news"] .cx-end { border: 1px solid #1d1d1b; border-top: 3px double #1d1d1b; border-radius: 0; }
+.cx[data-theme="news"] .cx-end-title { font-weight: 900; }
+.cx[data-theme="news"] .cx-end h4 { color: #b8352a; opacity: 1; }
+.cx[data-theme="news"] .cx-dots i.on { background: #1d1d1b; }

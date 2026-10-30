@@ -4,3 +4,4 @@ logs/
 .DS_Store
 .vercel
 .env.local
+data/cx_store.local.json

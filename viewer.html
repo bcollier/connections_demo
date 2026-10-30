@@ -52,7 +52,7 @@
       let data = { items: saved.slice().reverse() };
       if (API_BASE) {
         try {
-          const res = await fetch(`${API_BASE}/api/history`);
+          const res = await fetch(`${API_BASE}/api/about-history`);
           if (res.ok) data = await res.json();
         } catch {}
       }
