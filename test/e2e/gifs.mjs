@@ -24,7 +24,7 @@ const packs = JSON.parse(fs.readFileSync(path.join(ROOT, 'packs', 'packs.js'), '
 const browser = await chromium.launch();
 const W = 390, H = 760;
 
-for (const theme of ['ben', 'starwars', 'lotr', 'cmu']) {
+for (const theme of ['starwars', 'lotr', 'cmu']) {
   const cats = packs.find(p => p.id === theme).puzzles[0].categories;
   const context = await browser.newContext({ viewport: { width: W, height: H }, recordVideo: { dir: TMP, size: { width: W, height: H } } });
   const page = await context.newPage();

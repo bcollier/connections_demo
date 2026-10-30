@@ -1,4 +1,4 @@
-// The puzzle packs and the validator they share with the live generator.
+// The puzzle packs and the validator they share with the live puzzle writer.
 // Run with: npm test
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,8 +10,8 @@ const packs = loadPacks();
 const good = packs.find(p => p.id === 'starwars').puzzles[0];
 const clone = o => JSON.parse(JSON.stringify(o));
 
-test('there are four packs: About Ben, Star Wars, Lord of the Rings, Carnegie Mellon', () => {
-  assert.deepEqual(packs.map(p => p.id), ['ben', 'starwars', 'lotr', 'cmu']);
+test('there are three packs: Star Wars, Lord of the Rings, Carnegie Mellon', () => {
+  assert.deepEqual(packs.map(p => p.id), ['starwars', 'lotr', 'cmu']);
 });
 
 test('every pack passes the validator, with at least three puzzles each', () => {
@@ -32,7 +32,7 @@ for (const pack of packs) {
 }
 
 test('hand-written packs list their groups in difficulty order, yellow to purple', () => {
-  for (const pack of packs.filter(p => p.id !== 'ben')) {
+  for (const pack of packs) {
     for (const p of pack.puzzles) assert.deepEqual(p.categories.map(c => c.color), COLORS, p.id);
   }
 });
@@ -66,14 +66,7 @@ test('packs/packs.js matches packs/*.json (run node scripts/build-packs.mjs)', (
   assert.equal(fs.readFileSync(new URL('../packs/packs.js', import.meta.url), 'utf8'), bundle(packs));
 });
 
-test('the committed history holds only puzzles about Ben (the local server appends every player)', () => {
-  const rows = fs.readFileSync(new URL('../data/history.jsonl', import.meta.url), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
-  for (const r of rows) assert.equal(r.name, 'Ben Collier', 'remove other players from data/history.jsonl before committing');
-});
 
-test('the About Ben pack is only about Ben', () => {
-  for (const p of packs.find(x => x.id === 'ben').puzzles) assert.equal(p.generated.player, 'Ben Collier');
-});
 
 test('no em dashes in any pack (ben.collier.phd shows these, and its copy uses none)', () => {
   for (const p of packs) assert.ok(!JSON.stringify(p).includes('—'), p.id);

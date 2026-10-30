@@ -1,4 +1,4 @@
-// The puzzle checks, shared by the live generator (server/generator.js), the
+// The puzzle checks, shared by the live puzzle writer (server/puzzles.js), the
 // pack bundler (scripts/build-packs.mjs) and the tests (test/). Only zod, no
 // network, so it runs anywhere.
 import { z } from 'zod';

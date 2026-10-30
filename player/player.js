@@ -13,7 +13,7 @@
       onChange(packId, index) {},       // after a new puzzle loads
     });
     game.setPack('lotr', 2);
-    game.loadPuzzle(puzzleFromTheServer, { name: 'About you' });
+    game.loadPuzzle(puzzleFromTheServer, { name: 'Live puzzle', key: puzzleId });
 
   Accessibility: tiles are toggle buttons (aria-pressed) with arrow-key
   movement, results are announced through a live region, solved groups say
@@ -31,7 +31,7 @@
 
   // Theme copy: the end-of-game lines and the confetti each theme throws.
   const THEMES = {
-    ben: {
+    notebook: {
       won: 'Solved. Nice work.', lost: 'Out of mistakes. Here is how it fit together.',
       confetti: ['#ffe56b', '#b9f0a0', '#bfe3ff', '#dcc6f5', '#ffc0d2', '#2447a6'], shape: 'paper',
     },
@@ -136,7 +136,7 @@
     c.width = innerWidth * dpr; c.height = innerHeight * dpr;
     const ctx = c.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const t = THEMES[theme] || THEMES.ben;
+    const t = THEMES[theme] || THEMES.notebook;
     const parts = Array.from({ length: n }, (_, i) => ({
       x: innerWidth * (0.5 + (Math.random() - 0.5) * 0.3), y: innerHeight * 0.35,
       vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 11,
@@ -315,7 +315,7 @@
     const disclaimer = el('p', { class: 'cx-disclaimer' });
     const head = el('div', { class: 'cx-head' }, kicker, title, nums);
     const inner = el('div', { class: 'cx-inner' }, opts.picker === false ? null : picker, head, intro, stage, status, controls, end, keys, disclaimer, live);
-    const cx = el('div', { class: 'cx', 'data-theme': 'ben' }, sky, deco, inner);
+    const cx = el('div', { class: 'cx', 'data-theme': 'notebook' }, sky, deco, inner);
     root.innerHTML = '';
     root.appendChild(cx);
     const stars = Starfield(sky);
@@ -367,21 +367,51 @@
     /** Play a puzzle that is not in a pack, such as one the live server just wrote. */
     function loadPuzzle(puzzle, meta = {}) {
       S.pack = {
-        id: meta.id || 'live', name: meta.name || 'About you', theme: meta.theme || 'ben',
-        disclaimer: meta.disclaimer || '', puzzles: [puzzle], live: true,
+        id: meta.id || 'live', name: meta.name || 'Live puzzle', theme: meta.theme || 'notebook',
+        disclaimer: meta.disclaimer || '', puzzles: [puzzle], live: true, key: meta.key || '',
       };
       S.index = 0;
       applyTheme(S.pack.theme);
-      start(puzzle);
+      start(puzzle, S.pack.key ? readProgress(S.pack.key) : null);
       if (opts.onChange) opts.onChange(S.pack.id, 0);
     }
 
-    function start(raw) {
+    // ----- progress: a live puzzle picks up where this browser left it -----
+    // Keyed by the saved puzzle's id, so switching papers or topics and coming
+    // back (or reloading) keeps the solved groups, mistakes and guesses.
+    const PROGRESS = 'cx_progress';
+    function readAll() { try { return JSON.parse(localStorage.getItem(PROGRESS) || '{}'); } catch { return {}; } }
+    function readProgress(key) { const all = readAll(); return all[key] && typeof all[key] === 'object' ? all[key] : null; }
+    function saveProgress() {
+      if (!S.pack || !S.pack.key || !S.puzzle) return;
+      try {
+        const all = readAll();
+        all[S.pack.key] = {
+          at: Date.now(), order: S.order, solved: S.solved.map(c => ({ label: c.label, missed: Boolean(c.missed) })),
+          mistakes: S.mistakes, guesses: S.guesses, guessed: [...S.guessed], over: S.over, won: S.won,
+        };
+        const keys = Object.keys(all).sort((a, b) => (all[b].at || 0) - (all[a].at || 0)).slice(0, 40);
+        localStorage.setItem(PROGRESS, JSON.stringify(Object.fromEntries(keys.map(k => [k, all[k]]))));
+      } catch { /* storage unavailable: the game still plays */ }
+    }
+    function clearProgress(key) { try { const all = readAll(); delete all[key]; localStorage.setItem(PROGRESS, JSON.stringify(all)); } catch { /* fine */ } }
+
+    function start(raw, progress = null) {
       const p = normalizePuzzle(raw);
       S.puzzle = p;
       S.order = shuffled(p.categories.flatMap(c => c.words));
       S.selected = new Set(); S.solved = []; S.mistakes = 0; S.guesses = []; S.guessed = new Set();
       S.over = false; S.won = false; S.busy = false;
+      if (!progress && S.pack.key) clearProgress(S.pack.key); // "Play again" starts clean
+      const words = new Set(S.order);
+      const resume = progress && Array.isArray(progress.order) && progress.order.length === S.order.length && progress.order.every(w => words.has(w)) ? progress : null;
+      if (resume) {
+        S.order = resume.order.slice();
+        S.mistakes = Math.min(MAX_MISTAKES, Number(resume.mistakes) || 0);
+        S.guesses = Array.isArray(resume.guesses) ? resume.guesses : [];
+        S.guessed = new Set(Array.isArray(resume.guessed) ? resume.guessed : []);
+        S.over = Boolean(resume.over); S.won = Boolean(resume.won);
+      }
       renderPicker();
       kicker.textContent = S.pack.live ? S.pack.name : `${S.pack.name} · puzzle ${S.index + 1} of ${S.pack.puzzles.length}`;
       title.textContent = p.title || 'Connections';
@@ -402,9 +432,22 @@
       solvedEl.innerHTML = '';
       end.hidden = true; end.innerHTML = '';
       toastEl.textContent = ''; toastEl.className = 'cx-toast';
+      if (resume) {
+        for (const s of resume.solved || []) {
+          const cat = p.categories.find(c => c.label === s.label);
+          if (!cat || S.solved.includes(cat)) continue;
+          cat.missed = Boolean(s.missed);
+          S.solved.push(cat);
+          solvedEl.appendChild(band(cat, cat.missed));
+          const r = reveal(cat, cat.missed);
+          if (r) solvedEl.appendChild(r);
+        }
+      }
       renderGrid();
       renderStatus();
       renderControls();
+      if (resume && S.over) { showEnd(S.won); return; }
+      if (resume && (S.solved.length || S.mistakes)) return; // no opening crawl mid-game
       startCrawl(p);
     }
 
@@ -613,7 +656,7 @@
       if (n === 4) {
         await solve(best, false);
         announce(`Correct. ${best.label}: ${best.words.join(', ')}. ${4 - S.solved.length} groups to go.`);
-        if (S.solved.length === 4) { S.busy = false; return finish(true); }
+        if (S.solved.length === 4) { S.busy = false; saveProgress(); return finish(true); }
       } else {
         S.mistakes += 1;
         renderStatus();
@@ -626,6 +669,7 @@
         if (S.mistakes >= MAX_MISTAKES) { S.busy = false; return finish(false); }
       }
       S.busy = false; renderControls();
+      saveProgress();
     }
 
     function popDot() {
@@ -648,6 +692,7 @@
       await wait(120);
       for (const w of front) { const t = tileFor(w); if (t) t.remove(); }
       for (const w of cat.words) S.selected.delete(w);
+      cat.missed = Boolean(missed);
       S.solved.push(cat);
       const b = band(cat, missed);
       solvedEl.appendChild(b);
@@ -713,6 +758,7 @@
         }
         setTimeout(() => cx.classList.remove('cx-won'), 2600);
       }
+      saveProgress();
       await wait(won ? 700 : 300);
       showEnd(won);
     }
@@ -724,7 +770,7 @@
     }
 
     function showEnd(won) {
-      const T = THEMES[cx.dataset.theme] || THEMES.ben;
+      const T = THEMES[cx.dataset.theme] || THEMES.notebook;
       end.innerHTML = '';
       const h = el('h3', { class: 'cx-end-title', tabindex: '-1', text: won ? T.won : T.lost });
       const summary = won
@@ -819,5 +865,5 @@
     };
   }
 
-  window.ConnectionsPlayer = { mount, version: '2.1.0' };
+  window.ConnectionsPlayer = { mount, version: '2.2.0' };
 })();

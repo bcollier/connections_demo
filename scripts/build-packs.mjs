@@ -10,8 +10,8 @@ import { fileURLToPath } from 'url';
 import { puzzleProblems } from '../server/validate.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const PACK_ORDER = ['ben', 'starwars', 'lotr', 'cmu'];
-const THEMES = new Set(['ben', 'starwars', 'lotr', 'cmu']);
+export const PACK_ORDER = ['starwars', 'lotr', 'cmu'];
+const THEMES = new Set(['notebook', 'starwars', 'lotr', 'cmu']);
 
 export function loadPacks() {
   const dir = path.join(ROOT, 'packs');

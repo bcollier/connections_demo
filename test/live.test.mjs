@@ -9,6 +9,7 @@ import { OutputSchema, puzzleProblems } from '../server/validate.js';
 import { extractJsonCandidate } from '../server/parse.js';
 import { puzzle, admin, papers } from '../server/handlers.js';
 import { acquireLock, releaseLock } from '../server/store.js';
+import { isJetstream, canRun, complete } from '../server/llm.js';
 
 const RSS = `<?xml version="1.0"?><rss><channel><title>Feed</title>
 <item><title>Intel Shares Fall 22% &amp; More</title><link>https://www.example.com/2026/10/29/business/intel.html</link>
@@ -129,6 +130,24 @@ test('POST /api/puzzle with savedOnly never writes: an unknown topic answers non
   assert.equal(res.code, 200);
   assert.equal(res.body.none, true);
   assert.equal(res.body.saved, 0);
+});
+
+test('a jetstream/ prefix routes to Jetstream, and a model without its key is refused before any call', async () => {
+  assert.equal(isJetstream('jetstream/gpt-oss-120b'), true);
+  assert.equal(isJetstream('anthropic/claude-opus-5.5'), false);
+  const saved = { or: process.env.OPENROUTER_API_KEY, js: process.env.JETSTREAM_API_KEY };
+  delete process.env.OPENROUTER_API_KEY; delete process.env.JETSTREAM_API_KEY;
+  try {
+    assert.equal(canRun('jetstream/gpt-oss-120b'), false);
+    assert.equal(canRun('anthropic/claude-opus-5.5'), false);
+    await assert.rejects(complete({ model: 'jetstream/gpt-oss-120b', prompt: 'hi' }), e => e.code === 'nokey' && e.status === 503);
+    process.env.JETSTREAM_API_KEY = 'x';
+    assert.equal(canRun('jetstream/gpt-oss-120b'), true);
+    assert.equal(canRun('anthropic/claude-opus-5.5'), false);
+  } finally {
+    if (saved.or) process.env.OPENROUTER_API_KEY = saved.or; else delete process.env.OPENROUTER_API_KEY;
+    if (saved.js) process.env.JETSTREAM_API_KEY = saved.js; else delete process.env.JETSTREAM_API_KEY;
+  }
 });
 
 test('the writing lease is held by one caller at a time', async () => {

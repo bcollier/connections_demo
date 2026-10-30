@@ -33,7 +33,7 @@ const topicInput = $('topicInput');
 const newsStatus = $('newsStatus');
 const studyStatus = $('studyStatus');
 
-const S = { mode: 'news', info: null, current: null, busy: false, seen: loadSeen() };
+const S = { mode: 'news', info: null, current: null, busy: false, seen: loadSeen(), playing: loadPlaying() };
 // The query string as the page opened; the player rewrites it (?theme=&puzzle=) as soon as it mounts.
 const OPENED_WITH = new URLSearchParams(location.search);
 
@@ -42,15 +42,14 @@ const LONG_DATE = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { w
 // ----- the game -----
 const game = window.ConnectionsPlayer.mount($('game'), {
   packs: window.CONNECTIONS_PACKS,
-  pack: 'ben',
+  pack: 'starwars',
   useUrl: true,
   shareUrl: location.protocol.startsWith('http') ? location.origin + location.pathname : 'https://connections-about-you.vercel.app/',
   more: { label: 'Another puzzle', onclick: () => another() },
   onChange(packId) {
     const live = packId === 'news' || packId === 'study' || packId === 'live';
-    document.body.dataset.theme = packId === 'live' ? 'ben' : packId;
+    document.body.dataset.theme = packId === 'live' ? 'notebook' : packId;
     if (!live) {
-      $('genPanel').hidden = !(packId === 'ben' && S.info && S.info.about);
     }
   },
 });
@@ -72,7 +71,7 @@ function setMode(mode, { fromUser = false } = {}) {
 }
 function lastPack() {
   const t = new URLSearchParams(location.search).get('theme');
-  return window.CONNECTIONS_PACKS.some(p => p.id === t) ? t : 'ben';
+  return window.CONNECTIONS_PACKS.some(p => p.id === t) ? t : window.CONNECTIONS_PACKS[0].id;
 }
 tabs.forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode, { fromUser: true })));
 
@@ -82,6 +81,15 @@ function writeUrl(params) {
   for (const k of ['mode', 'paper', 'topic', 'game', 'theme', 'puzzle']) u.searchParams.delete(k);
   for (const [k, v] of Object.entries(params)) if (v) u.searchParams.set(k, v);
   history.replaceState(null, '', u);
+}
+
+// ----- remembering which puzzle this browser is in the middle of -----
+// Per paper or topic, the id of the puzzle last opened, so coming back to the
+// paper (or reloading) reopens that puzzle, whose progress the player keeps.
+function loadPlaying() { try { return JSON.parse(sessionStorage.getItem('cx_playing') || '{}'); } catch { return {}; } }
+function markPlaying(key, id) {
+  S.playing[key] = id;
+  try { sessionStorage.setItem('cx_playing', JSON.stringify(S.playing)); } catch { /* fine */ }
 }
 
 // ----- remembering which saved puzzles this browser has played -----
@@ -137,7 +145,7 @@ function loadLive(mode, data, key) {
     const n = (S.seen[key] || []).length + (S.seen[key] && S.seen[key].includes(String(data.id)) ? 0 : 1);
     p.intro = p.intro || 'Four groups, four of today\'s stories. Solve a group to see the story that inspired it.';
     game.loadPuzzle(p, {
-      id: 'news', theme: 'news',
+      id: 'news', theme: 'news', key: String(data.id || ''),
       name: `${paper.name} · ${LONG_DATE(src.date || S.info.date)} · puzzle ${n}`,
       disclaimer: `Written ${data.cached ? 'at ' + timeStr : 'just now'} by ${modelName(data.model)} from the paper's headlines; it can misread a story. Links open ${paper.name}'s site or app, where you sign in with your own subscription.`,
     });
@@ -147,7 +155,7 @@ function loadLive(mode, data, key) {
   } else {
     p.intro = p.intro || `Sixteen terms from ${src.name}. Solve a group to turn over its cards.`;
     game.loadPuzzle(p, {
-      id: 'study', theme: 'ben',
+      id: 'study', theme: 'notebook', key: String(data.id || ''),
       name: `Study cards · ${src.name}`,
       disclaimer: `Written ${data.cached ? 'at ' + timeStr : 'just now'} by ${modelName(data.model)}. Check anything you will be graded on against your course materials.`,
     });
@@ -155,7 +163,7 @@ function loadLive(mode, data, key) {
     $('studyAnother').hidden = false;
     writeUrl({ mode: 'study', topic: src.name });
   }
-  if (data.id) markSeen(key, String(data.id));
+  if (data.id) { markSeen(key, String(data.id)); markPlaying(key, String(data.id)); }
   S.current = { mode, key, paper: src.id, topic: src.name, id: data.id };
   if (S.mode !== mode) setMode(mode);
 }
@@ -165,10 +173,11 @@ function modelName(id) {
   return (m ? m[1] : id || 'the model').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/(\d) (\d)/g, '$1.$2');
 }
 
-async function playNews({ fresh = false, savedOnly = false } = {}) {
+async function playNews({ fresh = false, savedOnly = false, next = false } = {}) {
   if (DEMO_MODE || S.busy) return;
   const paper = paperInfo(paperSelect.value);
   const key = `news:${paper.id}`;
+  if (!fresh && !next && S.playing[key] && await reopen(S.playing[key])) return;
   S.busy = true; $('newsPlay').disabled = true; $('newsAnother').disabled = true;
   startLoader('news', LOADER.news(paper.name));
   try {
@@ -184,12 +193,13 @@ async function playNews({ fresh = false, savedOnly = false } = {}) {
   }
 }
 
-async function playStudy(topic, { fresh = false, savedOnly = false } = {}) {
+async function playStudy(topic, { fresh = false, savedOnly = false, next = false } = {}) {
   if (DEMO_MODE || S.busy) return;
   topic = (topic || '').replace(/\s+/g, ' ').trim();
   if (topic.length < 2) { topicInput.focus(); return; }
   topicInput.value = topic;
   const key = `study:${topic.toLowerCase()}`;
+  if (!fresh && !next && S.playing[key] && await reopen(S.playing[key])) return;
   S.busy = true; $('studyPlay').disabled = true; $('studyAnother').disabled = true;
   startLoader('study', LOADER.study(topic));
   try {
@@ -215,9 +225,15 @@ function nothingSaved(mode, what) {
 /** The "Another puzzle" button: a saved one this browser has not played, or a new one. */
 function another() {
   if (!S.current) return;
-  if (S.current.mode === 'news') playNews();
-  else playStudy(S.current.topic);
+  if (S.current.mode === 'news') playNews({ next: true });
+  else playStudy(S.current.topic, { next: true });
   $(S.current.mode === 'news' ? 'newsPanel' : 'studyPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+/** Reopen the puzzle this browser was playing for a paper or topic. False if it is gone. */
+async function reopen(id) {
+  S.busy = true;
+  try { await playSaved(id); return true; } catch { return false; } finally { S.busy = false; }
 }
 
 async function playSaved(id) {
@@ -233,10 +249,10 @@ async function playSaved(id) {
 
 // ----- forms -----
 $('newsForm').addEventListener('submit', e => { e.preventDefault(); playNews(); });
-$('newsAnother').addEventListener('click', () => playNews());
+$('newsAnother').addEventListener('click', () => playNews({ next: true }));
 paperSelect.addEventListener('change', () => { $('newsAnother').hidden = true; playNews({ savedOnly: true }); });
 $('studyForm').addEventListener('submit', e => { e.preventDefault(); playStudy(topicInput.value); });
-$('studyAnother').addEventListener('click', () => playStudy(S.current && S.current.topic || topicInput.value));
+$('studyAnother').addEventListener('click', () => playStudy(S.current && S.current.topic || topicInput.value, { next: true }));
 document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => playStudy(c.dataset.topic)));
 
 // ----- start -----
@@ -277,27 +293,5 @@ async function init() {
   playNews({ savedOnly: true }); // free: a saved puzzle or a nudge to press Play
 }
 
-// ----- the older "about you" generator, kept for the About Ben theme -----
-const genForm = $('genForm');
-if (genForm) {
-  genForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = $('nameInput').value.trim();
-    const town = $('locationInput').value.trim();
-    if (!name || !town) return;
-    const btn = $('generateBtn'); const st = $('genStatus');
-    btn.disabled = true;
-    st.textContent = 'Asking the AI... (30 seconds to 3 minutes)';
-    try {
-      const res = await fetch(`${API_BASE}/api/generate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, location: town }) });
-      if (!res.ok) { let m = ''; try { m = (await res.json()).message; } catch { /* none */ } throw Object.assign(new Error('HTTP ' + res.status), { userMessage: m }); }
-      const data = await res.json();
-      game.loadPuzzle({ ...data, title: `About ${name}` }, { name: `About ${name}, ${town}`, disclaimer: 'Written just now by an AI from public web pages. It can be wrong, and some guesses about your tastes are made up for fun.' });
-      st.textContent = 'Your puzzle is ready.';
-    } catch (err) {
-      st.textContent = err.userMessage || 'Could not reach the AI server.';
-    } finally { btn.disabled = false; }
-  });
-}
 
 init();

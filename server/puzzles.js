@@ -11,7 +11,7 @@ import { OutputSchema, normalizeWordForDisplay, canonicalizeWord, normalizeColor
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EXAMPLE_CSV = path.join(ROOT, 'nyt_connections_groups_history_sept2025.csv');
 
-const SYSTEM = `You write Connections puzzles: sixteen words that sort into four groups of four. A good puzzle has one plain group, one clever group built on wordplay or a hidden pattern, and red herrings: words that look like they belong to one group but are needed in another (five words that could be "colors" when only four are). Every word is a single game token (one word, or a short fixed phrase like "RED TAPE" at most 20 characters), in capitals, with no word repeated or sharing a root with another. Labels are witty category names, never the headline itself. You answer with JSON only.`;
+export const SYSTEM = `You write Connections puzzles: sixteen words that sort into four groups of four. A good puzzle has one plain group, one clever group built on wordplay or a hidden pattern, and red herrings: words that look like they belong to one group but are needed in another (five words that could be "colors" when only four are). Every word is a single game token (one word, or a short fixed phrase like "RED TAPE" at most 20 characters), in capitals, with no word repeated or sharing a root with another. Labels are witty category names, never the headline itself. You answer with JSON only.`;
 
 const RUBRIC = `COLOR RUBRIC (difficulty)
 - Yellow: the plain group, obvious once seen.
