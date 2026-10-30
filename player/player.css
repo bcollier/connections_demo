@@ -169,9 +169,9 @@
 }
 
 /* =====================================================================
-   Theme: About Ben. A notebook page: graph paper, index cards, highlighters.
+   Theme: Notebook (study cards). A notebook page: graph paper, index cards, highlighters.
    ===================================================================== */
-.cx[data-theme="ben"] {
+.cx[data-theme="notebook"] {
   background-color: #fbf8f1;
   background-image:
     linear-gradient(rgba(64,120,168,.16) 1px, transparent 1px),
@@ -180,19 +180,19 @@
     linear-gradient(90deg, rgba(64,120,168,.08) 1px, transparent 1px);
   background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
 }
-.cx[data-theme="ben"] .cx-tile { box-shadow: 0 1px 1px rgba(0,0,0,.08), 0 6px 10px -6px rgba(0,0,0,.3); transform: rotate(var(--tilt, 0deg)); }
-.cx[data-theme="ben"] .cx-tile[aria-pressed="true"] { transform: rotate(0deg); }
-.cx[data-theme="ben"] .cx-band { background-color: transparent !important; background-image: linear-gradient(100deg, transparent 0 .4%, var(--hl) 1.4%, var(--hl) 98.6%, transparent 99.6%); background-repeat: no-repeat; background-size: 100% 100%; }
-.cx[data-theme="ben"] .cx-band[data-color="Yellow"] { --hl: var(--cx-y); }
-.cx[data-theme="ben"] .cx-band[data-color="Green"] { --hl: var(--cx-g); }
-.cx[data-theme="ben"] .cx-band[data-color="Blue"] { --hl: var(--cx-b); }
-.cx[data-theme="ben"] .cx-band[data-color="Purple"] { --hl: var(--cx-p); }
-.cx[data-theme="ben"] .cx-band-in { animation: cx-highlight .7s cubic-bezier(.6,.1,.3,1); }
+.cx[data-theme="notebook"] .cx-tile { box-shadow: 0 1px 1px rgba(0,0,0,.08), 0 6px 10px -6px rgba(0,0,0,.3); transform: rotate(var(--tilt, 0deg)); }
+.cx[data-theme="notebook"] .cx-tile[aria-pressed="true"] { transform: rotate(0deg); }
+.cx[data-theme="notebook"] .cx-band { background-color: transparent !important; background-image: linear-gradient(100deg, transparent 0 .4%, var(--hl) 1.4%, var(--hl) 98.6%, transparent 99.6%); background-repeat: no-repeat; background-size: 100% 100%; }
+.cx[data-theme="notebook"] .cx-band[data-color="Yellow"] { --hl: var(--cx-y); }
+.cx[data-theme="notebook"] .cx-band[data-color="Green"] { --hl: var(--cx-g); }
+.cx[data-theme="notebook"] .cx-band[data-color="Blue"] { --hl: var(--cx-b); }
+.cx[data-theme="notebook"] .cx-band[data-color="Purple"] { --hl: var(--cx-p); }
+.cx[data-theme="notebook"] .cx-band-in { animation: cx-highlight .7s cubic-bezier(.6,.1,.3,1); }
 @keyframes cx-highlight { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
-.cx[data-theme="ben"] .cx-band-label { font-family: "Kalam", cursive; font-size: 19px; text-transform: none; letter-spacing: 0; }
-.cx[data-theme="ben"] .cx-end { background: #fff2ad; border: 0; box-shadow: 0 1px 1px rgba(0,0,0,.12), 0 16px 22px -12px rgba(0,0,0,.4); transform: rotate(-.6deg); }
-.cx[data-theme="ben"] .cx-btn { border-radius: 14px 4px 12px 4px / 4px 12px 4px 14px; box-shadow: 3px 4px 0 rgba(29,38,51,.16); }
-.cx[data-theme="ben"] .cx-primary { border-color: #1d2633; }
+.cx[data-theme="notebook"] .cx-band-label { font-family: "Kalam", cursive; font-size: 19px; text-transform: none; letter-spacing: 0; }
+.cx[data-theme="notebook"] .cx-end { background: #fff2ad; border: 0; box-shadow: 0 1px 1px rgba(0,0,0,.12), 0 16px 22px -12px rgba(0,0,0,.4); transform: rotate(-.6deg); }
+.cx[data-theme="notebook"] .cx-btn { border-radius: 14px 4px 12px 4px / 4px 12px 4px 14px; box-shadow: 3px 4px 0 rgba(29,38,51,.16); }
+.cx[data-theme="notebook"] .cx-primary { border-color: #1d2633; }
 
 /* =====================================================================
    Theme: Star Wars. Deep space, a starfield canvas, gold type, an opening
@@ -367,7 +367,7 @@
 @media (prefers-reduced-motion: reduce) {
   .cx *, .cx *::before, .cx *::after { animation: none !important; transition: none !important; }
   .cx-map-edge, .cx-runes path { stroke-dashoffset: 0; }
-  .cx[data-theme="ben"] .cx-tile { transform: none; }
+  .cx[data-theme="notebook"] .cx-tile { transform: none; }
 }
 
 /* =====================================================================

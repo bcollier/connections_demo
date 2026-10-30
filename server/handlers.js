@@ -4,7 +4,7 @@
 import crypto from 'crypto';
 import { PAPERS, fetchStories } from './news.js';
 import { makeNewsPuzzle, makeStudyPuzzle, summarize } from './puzzles.js';
-import { hasKey, listModels } from './llm.js';
+import { hasKey, canRun, isJetstream, hasOpenRouter, hasJetstream, listModels } from './llm.js';
 import * as store from './store.js';
 import { getModel, setModel, getDailyCap, setDailyCap, DEFAULT_MODEL, DEFAULT_DAILY_CAP, persistent } from './settings.js';
 import { allowedOrigin, clientIp, take, busy, begin, done } from './guard.js';
@@ -29,7 +29,6 @@ const publicRow = r => ({ id: r.id, model: r.model, created_at: r.created_at, pu
 export async function papers(_req, res) {
   res.status(200).json({
     live: hasKey(),
-    about: Boolean(process.env.JETSTREAM_API_KEY || process.env.OPENAI_API_KEY), // the older "about you" writer
     model: await getModel(),
     history: await persistent(),
     date: newsDate(),
@@ -82,7 +81,8 @@ export async function puzzle(req, res) {
   if (savedOnly) return res.status(200).json({ none: true, saved: saved.length, live: hasKey() });
 
   // 2. Otherwise write one, within the brakes.
-  if (!hasKey()) return res.status(503).json({ error: 'nokey', message: 'The puzzle writer is switched off (no model key on the server).', saved: saved.length });
+  const model = await getModel();
+  if (!canRun(model)) return res.status(503).json({ error: 'nokey', message: `The puzzle writer is switched off (no ${isJetstream(model) ? 'Jetstream' : 'OpenRouter'} key on the server).`, saved: saved.length });
   const ip = clientIp(req);
   if (busy()) return res.status(429).json({ error: 'busy', message: 'The writer is busy with other puzzles. Try again in a minute.', saved: saved.length });
   const cap = await getDailyCap();
@@ -100,7 +100,6 @@ export async function puzzle(req, res) {
 
   begin();
   try {
-    const model = await getModel();
     const avoid = saved.slice(0, 12).map(r => summarize(r.puzzle));
     let r;
     if (mode === 'news') {
@@ -117,6 +116,7 @@ export async function puzzle(req, res) {
   } catch (err) {
     log({ event: 'failed', mode, key, status: err.status, message: String(err.message || err).slice(0, 200) });
     if (err.code === 'nostories') return res.status(502).json({ error: 'nostories', message: `Could not read today's headlines from ${paper.name}. Try another paper.` });
+    if (err.code === 'nokey') return res.status(503).json({ error: 'nokey', message: 'The puzzle writer is switched off (no key for the chosen model).' });
     if (err.status === 402) return res.status(503).json({ error: 'budget', message: 'The model account is out of credit.' });
     if (err.status === 429) return res.status(503).json({ error: 'upstream-busy', message: 'The model service is busy. Try again in a minute.' });
     return res.status(502).json({ error: 'failed', message: 'The writer could not finish a puzzle this time. Try again.' });
@@ -185,7 +185,8 @@ export async function admin(req, res) {
   if (input.action === 'set') {
     if (input.model !== undefined) {
       const id = String(input.model).trim();
-      if (!models.some(m => m.id === id)) return res.status(400).json({ error: 'model', message: `OpenRouter does not list a model called ${id}.` });
+      if (!models.some(m => m.id === id)) return res.status(400).json({ error: 'model', message: `Neither OpenRouter nor Jetstream lists a model called ${id}.` });
+      if (!canRun(id)) return res.status(400).json({ error: 'model', message: `No ${isJetstream(id) ? 'Jetstream' : 'OpenRouter'} key is set on the server, so ${id} cannot run.` });
       await setModel(id);
       log({ event: 'admin_set_model', model: id });
     }
@@ -201,7 +202,8 @@ export async function admin(req, res) {
   res.status(200).json({
     model, defaultModel: DEFAULT_MODEL, dailyCap: cap, defaultDailyCap: DEFAULT_DAILY_CAP, persistent: await persistent(), live: hasKey(),
     madeToday, spentToday: spent, recent,
-    models: models.filter(m => /^(anthropic|openai|google|x-ai|meta-llama|mistralai|deepseek|qwen)\//.test(m.id)),
+    models: models.filter(m => /^(jetstream|anthropic|openai|google|x-ai|meta-llama|mistralai|deepseek|qwen)\//.test(m.id)),
+    providers: { openrouter: hasOpenRouter(), jetstream: hasJetstream() },
   });
 }
 

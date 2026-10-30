@@ -62,7 +62,7 @@ In the live modes, solving a group also opens a **reveal** under the band: for a
 | --- | --- | --- | --- |
 | **Today's paper** | A newspaper from the eleven in [CMU's digital news subscriptions](https://guides.library.cmu.edu/digital_news/home): The New York Times, The Wall Street Journal, The Washington Post, Financial Times, Bloomberg, The Atlantic, Business Insider, The Information, The New Yorker, Pittsburgh Business Times, Pittsburgh Post-Gazette. | Reads today's headlines and summaries, picks four stories as different as it can, and writes one group from each, with red herrings across groups. | The story: headline, abstract, how the words connect, and a link that opens the paper's site or app (where you sign in with your own subscription). |
 | **Study cards** | A topic: "data science", "cell biology", "the French Revolution". | Chooses sixteen terms a student should know and sorts them into four concept families, one of them a trap for beginners. | Why the four belong together, and a definition of each term. |
-| **Themed packs** | A theme inside the game. | Nothing: these are hand-made (the About Ben pack was written by GPT-5 about me and saved). | The group's explanation at the end, as before. |
+| **Themed packs** | A theme inside the game. | Nothing: these are hand-made. | The group's explanation at the end, as before. |
 
 **Another puzzle.** The first time anyone picks a paper on a given day, the AI writes that day's first puzzle for it and saves it. Everyone after that plays the saved one instantly. "Another from this paper" gives you a saved puzzle you have not played in this browser session, and only writes a new one when none is left, built on different stories (the prompt is told what the day's earlier puzzles used). Study topics work the same way, keyed by the topic.
 
@@ -130,17 +130,17 @@ Locally, without Supabase, the same history lives in `data/cx_store.local.json` 
 
 ## The admin page: which model writes
 
-[`admin.html`](admin.html) asks for the `ADMIN_PASSWORD` set on the server (compared in constant time, with a delay on a wrong guess), then shows the model in use, how many new puzzles were written today against the daily cap, what they cost, and the recent puzzles. The model is a dropdown of OpenRouter's models from Anthropic, OpenAI, Google, xAI, Meta, Mistral, DeepSeek and Qwen, with their prices per million tokens and an estimate per puzzle. Saving writes `cx_settings` and takes effect on every server instance within a minute. The default is `anthropic/claude-opus-5.5` (`DEFAULT_MODEL`), and the daily cap defaults to 150 (`DAILY_CAP`).
+[`admin.html`](admin.html) asks for the `ADMIN_PASSWORD` set on the server (compared in constant time, with a delay on a wrong guess), then shows the model in use, how many new puzzles were written today against the daily cap, what they cost, and the recent puzzles. The model is a dropdown of OpenRouter's models from Anthropic, OpenAI, Google, xAI, Meta, Mistral, DeepSeek and Qwen, with their prices per million tokens and an estimate per puzzle, and, when a `JETSTREAM_API_KEY` is set, a free group: the open models on Jetstream2's academic allocation (`jetstream/gpt-oss-120b`, `jetstream/muse-glimmer`, `jetstream/gemma-4-31b-it`, `jetstream/qwen-3.8-27b`). The `jetstream/` prefix on the id picks the provider (`server/llm.js`); the model name after it is what Jetstream calls it. In a trial, gpt-oss-120b wrote a sound study deck in 13 seconds and a weaker newspaper puzzle in 47 seconds after two rejected attempts; it is a fair free choice for study cards and a step down from Opus for the paper. muse-glimmer reasons at length before it answers (about three minutes for a study deck), so a retry can run past Vercel's 300-second limit. Saving writes `cx_settings` and takes effect on every server instance within a minute. The default is `anthropic/claude-opus-5.5` (`DEFAULT_MODEL`), and the daily cap defaults to 150 (`DAILY_CAP`).
 
 ## The themes
 
-The two live modes have skins of their own: **Newsprint** for today's paper (an off-white sheet with a hairline column grid, a blackletter dateline, a bold serif masthead, groups as boxed headlines and each story as a clipping with a drop cap), and the notebook skin from About Ben for study cards (index-card tiles on graph paper, with the definitions as a stack of cards under the band). Neither uses a newspaper's logo or typeface; "The Daily Connections" look is this game's own.
+The two live modes have skins of their own: **Newsprint** for today's paper (an off-white sheet with a hairline column grid, a blackletter dateline, a bold serif masthead, groups as boxed headlines and each story as a clipping with a drop cap), and **Notebook** for study cards (index-card tiles on graph paper, with the definitions as a stack of cards under the band). Neither uses a newspaper's logo or typeface; "The Daily Connections" look is this game's own.
 
 Each theme is a skin over the same game: the rules, controls and layout don't change. Everything is drawn with CSS, inline SVG and canvas. There are no logos, film stills, official fonts or trademarked artwork; the themes evoke their worlds with original shapes and colors.
 
 | Theme | Look | When you solve a group | When you win |
 | --- | --- | --- | --- |
-| **About Ben** | Graph paper, tilted index-card tiles, the handwriting and mono fonts from my site. | A highlighter swipes across the band. | Paper confetti in highlighter colors. |
+| **Notebook** (study cards) | Graph paper, tilted index-card tiles, handwriting and mono fonts. | A highlighter swipes across the band. | Paper confetti in highlighter colors. |
 | **Star Wars** | Deep space, a canvas starfield drifting toward you, gold type. Each puzzle opens with an original crawl that scrolls up a tilted plane (skip it with the button or Esc). | The stars stretch into hyperspace streaks; the band ignites from left to right like a blade. | A longer jump to lightspeed, a small screen rumble, star-shaped sparks. |
 | **The Lord of the Rings** | Parchment with darkened edges, a map border that inks itself in with a dashed route inside it, a compass rose, mountains and trees, and rune-like flourishes beside the title. The runes are invented strokes, not Tolkien's alphabets. | A golden ring rises over the band and glows. | A larger ring and falling golden leaves. |
 | **Carnegie Mellon** | A tartan drawn in CSS gradients (Carnegie red, iron gray, black and a gold thread), a white card with a red top rule. | Music notes float up from the band. | A bagpipe marches across the bottom, squeezing its bag, with tartan confetti. |
@@ -151,7 +151,6 @@ Sound is off by default everywhere. Only the Carnegie Mellon theme has any: a **
 
 | Pack | Puzzles |
 | --- | --- |
-| About Ben (written by GPT-5, saved) | Pizza, Pogs and Kennywood · Arcade Night · The Experiment · The Data Stack · Model Behavior |
 | Star Wars | A Galaxy of Words · The Saber Test · Outer Rim Run |
 | The Lord of the Rings | The Fellowship · Second Breakfast · A Long Walk to Mordor |
 | Carnegie Mellon | My Heart Is in the Work · Tartan Pride · Carnival Weekend |
@@ -237,7 +236,7 @@ The same shape comes back from the live writers and sits in every pack. Fields m
   ],
   "source": { "id": "nyt", "name": "The New York Times", "short": "NYT", "home": "https://www.nytimes.com/", "date": "2026-10-29", "feed": "The New York Times's RSS feeds" }, // news; study: { id: "study", name: topic }
   "generated": { "model": "anthropic/claude-opus-5.5", "ts": "...", "mode": "news" },
-  "recommendations": [ { "title": "...", "url": "https://...", "type": "article" } ] // the older about-you puzzles only
+  "recommendations": [ { "title": "...", "url": "https://...", "type": "article" } ] // optional links listed at the end
 }
 ```
 
@@ -308,7 +307,7 @@ Open http://localhost:3000. Today's paper loads The New York Times puzzle (the f
 
 Without any key, the page still serves and the packs play; the live modes say the writer is switched off. `window.CONNECTIONS_API_BASE` in [`config.js`](config.js) points a hosted copy at a server somewhere else.
 
-Endpoints: `POST /api/puzzle`, `GET /api/papers`, `GET /api/history`, `POST /api/admin`, `GET /api/ping`, and from the first version `POST /api/generate`, `GET /api/about-history` (local only, read by [`viewer.html`](viewer.html)) and `POST /api/client-log`.
+Endpoints: `POST /api/puzzle`, `GET /api/papers`, `GET /api/history`, `POST /api/admin`, `GET /api/ping`, and locally `POST /api/client-log`.
 
 ## Deploying
 
@@ -316,7 +315,8 @@ Endpoints: `POST /api/puzzle`, `GET /api/papers`, `GET /api/history`, `POST /api
 
   | Variable | Needed for |
   | --- | --- |
-  | `OPENROUTER_API_KEY` | Writing puzzles at all. |
+  | `OPENROUTER_API_KEY` | Writing puzzles with the commercial models. |
+  | `JETSTREAM_API_KEY` | Optional: adds the free Jetstream2 models to the admin's dropdown (`jetstream/...`). Either key is enough to go live. |
   | `ADMIN_PASSWORD` | The admin page. Make a new one for this project. |
   | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Keeping the history and the admin's model choice. Run [`supabase/001_cx.sql`](supabase/001_cx.sql) once in the project's SQL editor to create `cx_settings` and `cx_puzzles`. Without these, every visit may write a new puzzle and nothing is kept. |
   | `NYT_API_KEY` | Optional: real abstracts from the Times' Top Stories API. |
@@ -327,7 +327,7 @@ Endpoints: `POST /api/puzzle`, `GET /api/papers`, `GET /api/history`, `POST /api
 
 ## Costs and brakes
 
-A puzzle is one model call of about 5,000 input and 2,500 output tokens (the headlines are most of the input): about $0.07 on Claude Opus 5.5, $0.03 on Sonnet 5.5, under a cent on Haiku 5.5. OpenRouter reports the exact cost per call and it is saved with the puzzle, so the admin page can show what today cost. Saved puzzles cost nothing, and the first visitor of the day pays for everyone who picks the same paper.
+A puzzle is one model call of about 5,000 input and 2,500 output tokens (the headlines are most of the input): about $0.07 on Claude Opus 5.5, $0.03 on Sonnet 5.5, under a cent on Haiku 5.5. OpenRouter reports the exact cost per call and it is saved with the puzzle, so the admin page can show what today cost. Saved puzzles cost nothing, and the first visitor of the day pays for everyone who picks the same paper. On a `jetstream/` model the call is free (an academic allocation) and the saved cost is $0.
 
 The brakes, outermost first:
 
@@ -342,10 +342,10 @@ Every refusal comes back to the page as a plain message, and the page keeps what
 
 ## Privacy: what is and isn't published
 
-- **Published:** the hand-made packs; the five puzzles GPT-5 wrote about me (`packs/ben.json`, `data/history.jsonl`); and every puzzle the live writers produce, which anyone can read on the history page. Those contain headlines, links and abstracts from the papers (which belong to their publishers) and the model's words, and nothing about the player.
+- **Published:** the hand-made packs, and every puzzle the live writers produce, which anyone can read on the history page. Those contain headlines, links and abstracts from the papers (which belong to their publishers) and the model's words, and nothing about the player.
 - **Never stored:** who played, from where, what they guessed, or what topic they typed beyond the topic itself as the puzzle's key. The admin password is compared on the server and kept only in the admin's own browser session.
 - **Keys** live in `.env` (git-ignored) or the Vercel project, never in the repo.
-- **Locally:** the local server writes its logs to `logs/` and the local history to `data/cx_store.local.json`, both git-ignored. The older about-you generator still appends to `data/history.jsonl`, which *is* tracked, so if you make puzzles about other people locally, restore it with `git checkout data/history.jsonl` before committing; the tests catch it if you forget.
+- **Locally:** the local server writes its logs to `logs/` and the local history to `data/cx_store.local.json`, both git-ignored.
 - The page loads Google Fonts and nothing else from a third party. There is no analytics in this repo.
 
 ## Testing
@@ -401,7 +401,6 @@ The screenshots at the top of this file were taken with the same Playwright setu
 | `packs/*.json`, `packs/packs.js` | The puzzle packs and their generated bundle. |
 | `scripts/build-packs.mjs` | Validates the packs and writes `packs/packs.js`. |
 | `config.js` | Where the server runs. Empty means same origin, or localhost:3000 from a file. |
-| `viewer.html` | The About Ben puzzles side by side, or the local about-you history. |
 | `server/handlers.js` | The HTTP handlers: puzzle, history, admin, papers, ping. Shared by Express and Vercel. |
 | `server/news.js` | The eleven papers and how to read each one's headlines. |
 | `server/puzzles.js` | The two briefs, the checks, the retries. |
@@ -410,11 +409,9 @@ The screenshots at the top of this file were taken with the same Playwright setu
 | `server/settings.js` | The model and the daily cap: database value, env default, one-minute cache. |
 | `server/guard.js` | Origin check, per-visitor rate limits, in-flight cap. |
 | `server/validate.js`, `server/parse.js` | The puzzle schema and checks; JSON extraction from a model reply. |
-| `server/generator.js` | The first version's about-you writer (OpenAI or Jetstream2 + Tavily). |
-| `server/index.js` | Local Express server: the handlers above, static files, the about-you routes. |
+| `server/index.js` | Local Express server: the handlers above and the static files. |
 | `api/*.js`, `vercel.json` | The Vercel functions (one line each) and their limits. |
 | `supabase/001_cx.sql` | The two tables: `cx_settings`, `cx_puzzles`. |
-| `data/history.jsonl` | The first version's saved puzzles (only about me). |
 | `nyt_connections_groups_*.csv` | Real NYT groups used as examples in the prompts. |
 | `test/` | `packs.test.mjs`, `live.test.mjs` (node:test) and `e2e/` (Playwright checks and the GIF recorder). |
 | `docs/screenshots/`, `docs/gifs/` | Screenshots and README GIFs. |
@@ -426,4 +423,4 @@ The screenshots at the top of this file were taken with the same Playwright setu
 - The Carnegie Mellon pack is my own, made for fun as a faculty member, and is not an official university product. No university logos or marks are used.
 - Fonts from Google Fonts: Kalam, IBM Plex Mono, Literata, Cinzel, IM Fell English, Orbitron, Playfair Display and UnifrakturMaguntia.
 - Headlines come from each paper's own RSS feeds, the New York Times Top Stories API, or Google News, and belong to their publishers. The newspaper list is Carnegie Mellon University Libraries' [digital news subscriptions](https://guides.library.cmu.edu/digital_news/home); access to the stories is through each reader's own subscription.
-- Built with Claude Code. Live puzzles are written by Claude Opus 5.5 through [OpenRouter](https://openrouter.ai/) (the model is a setting). The About Ben pack was written by OpenAI GPT-5, and the earlier free route used gpt-oss-120b on [Jetstream2](https://jetstream-cloud.org/) (NSF ACCESS) with search by [Tavily](https://tavily.com/).
+- Built with Claude Code. Live puzzles are written by Claude Opus 5.5 through [OpenRouter](https://openrouter.ai/) by default; the admin can switch to a free open model (gpt-oss-120b and others) on [Jetstream2](https://jetstream-cloud.org/) (NSF ACCESS).

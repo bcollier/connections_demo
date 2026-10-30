@@ -15,7 +15,7 @@ import { chromium } from 'playwright';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = path.join(ROOT, 'docs', 'screenshots');
 fs.mkdirSync(OUT, { recursive: true });
-const THEMES = ['ben', 'starwars', 'lotr', 'cmu'];
+const THEMES = ['starwars', 'lotr', 'cmu'];
 const SIZES = [['desktop', 1440, 900], ['phone', 390, 844]];
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg' };
 

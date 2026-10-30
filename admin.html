@@ -54,7 +54,7 @@
       </div>
       <form id="setForm">
         <div class="row">
-          <label>Model (OpenRouter id) <select id="model"></select></label>
+          <label>Model <select id="model"></select></label>
           <label>Daily cap <input id="cap" type="number" min="0" max="5000" step="1" style="width:120px"></label>
         </div>
         <p class="hint" id="price"></p>
@@ -102,8 +102,8 @@
       const groups = {};
       for (const m of models) (groups[m.id.split('/')[0]] = groups[m.id.split('/')[0]] || []).push(m);
       for (const [prov, list] of Object.entries(groups).sort()) {
-        const og = document.createElement('optgroup'); og.label = prov;
-        for (const m of list) og.append(new Option(`${m.id}  ·  $${m.inPerM.toFixed(2)} in / $${m.outPerM.toFixed(2)} out per M`, m.id));
+        const og = document.createElement('optgroup'); og.label = prov === 'jetstream' ? 'jetstream (open models, free on the academic allocation)' : prov;
+        for (const m of list) og.append(new Option(prov === 'jetstream' ? `${m.id}  ·  free` : `${m.id}  ·  $${m.inPerM.toFixed(2)} in / $${m.outPerM.toFixed(2)} out per M`, m.id));
         sel.append(og);
       }
       if (![...sel.options].some(o => o.value === d.model)) sel.append(new Option(d.model + ' (current)', d.model));
@@ -123,7 +123,7 @@
     }
     function pricing() {
       const m = models.find(x => x.id === $('model').value);
-      $('price').textContent = m ? `About ${money((m.inPerM * 5000 + m.outPerM * 2500) / 1e6)} per puzzle at this model's prices${m.context ? `, ${Math.round(m.context / 1000)}k context` : ''}.` : '';
+      $('price').textContent = !m ? '' : m.provider === 'jetstream' ? 'Free: an open model on Jetstream2 (NSF ACCESS academic allocation). Slower and less polished than the paid models; a puzzle may take a retry.' : `About ${money((m.inPerM * 5000 + m.outPerM * 2500) / 1e6)} per puzzle at this model's prices${m.context ? `, ${Math.round(m.context / 1000)}k context` : ''}.`;
     }
     $('model').addEventListener('change', pricing);
 
