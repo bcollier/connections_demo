@@ -331,10 +331,12 @@ A puzzle is one model call of about 5,000 input and 2,500 output tokens (the hea
 
 The brakes, outermost first:
 
+0. **Nothing is spent without a click.** Opening the page, or changing the paper, only asks the server for a saved puzzle (`savedOnly`); if there is none, the page says so and waits for the Play button. Crawlers, link previews and Vercel's own deployment screenshots load the page without clicking, and before this rule each of them paid for a puzzle.
 1. **The OpenRouter key's own credit limit**, which is the guarantee.
 2. **A daily cap** on new puzzles across all visitors and both modes (150 by default; the admin can change it), counted in the database, so it survives restarts. Past the cap, saved puzzles still play.
 3. **Only this page may call the writer**: requests from other sites, or with no `Origin`, get a 403.
-4. **Per-visitor limits**: six new puzzles per 15 minutes and twenty a day per IP address, and at most three in progress per server instance. These live in memory and reset with each new Vercel instance, so they slow abuse rather than stop it.
+4. **One writer per puzzle.** Before writing, the server takes a short lease on the (paper, day) or topic, a row in `cx_settings` whose primary key makes the insert atomic. A second visitor who asks for the same puzzle in those seconds waits for the first one's save and plays it, instead of paying for a twin.
+5. **Per-visitor limits**: six new puzzles per 15 minutes and twenty a day per IP address, and at most three in progress per server instance. These live in memory and reset with each new Vercel instance, so they slow abuse rather than stop it.
 
 Every refusal comes back to the page as a plain message, and the page keeps whatever puzzle it was showing.
 
